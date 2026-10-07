@@ -32,14 +32,15 @@ public class DemoDataSeeder implements ApplicationRunner {
     @Override
     public void run(ApplicationArguments args) {
         Customer john = customerRepository.save(new Customer(1, "John", "Doe", "john@doe.com"));
-        customerRepository.save(new Customer(2, "Jane", "Doe", "jane@doe.com"));
+        Customer jane = customerRepository.save(new Customer(2, "Jane", "Doe", "jane@doe.com"));
 
         // A fixed seed keeps the demo data the same on every start
         Random random = new Random(2023);
-        LocalDate today = LocalDate.now();
+        LocalDate today = transactionService.today();
         LocalDate start = today.minusMonths(MONTHS_OF_HISTORY).withDayOfMonth(1);
 
         add(john, start, "2500.00", "Opening deposit");
+        add(jane, start, "800.00", "Opening deposit");
         for (LocalDate day = start; !day.isAfter(today); day = day.plusDays(1)) {
             switch (day.getDayOfMonth()) {
                 case 1 -> add(john, day, "3200.00", "Salary");
@@ -54,6 +55,17 @@ public class DemoDataSeeder implements ApplicationRunner {
             }
             if (random.nextInt(10) == 0) {
                 add(john, day, randomAmount(random, -80, -5), "Card payment");
+            }
+
+            switch (day.getDayOfMonth()) {
+                case 5 -> add(jane, day, "-720.00", "Rent");
+                case 25 -> add(jane, day, "2800.00", "Salary");
+                default -> {
+                    // nothing fixed on other days
+                }
+            }
+            if (day.getDayOfWeek().getValue() == 3) {
+                add(jane, day, randomAmount(random, -95, -25), "Groceries");
             }
         }
     }

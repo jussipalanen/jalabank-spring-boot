@@ -11,7 +11,7 @@
 	</parent>
 	<groupId>jussinet.jalabank</groupId>
 	<artifactId>jalabank</artifactId>
-	<version>2.0.0</version>
+	<version>2.1.0</version>
 	<name>jalabank</name>
 	<description>Jalabank demo application (Spring Boot, in-memory demo data)</description>
 	<properties>
@@ -33,6 +33,13 @@
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-actuator</artifactId>
+		</dependency>
+
+		<!-- OpenAPI description and Swagger UI at /docs -->
+		<dependency>
+			<groupId>org.springdoc</groupId>
+			<artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+			<version>3.1.1</version>
 		</dependency>
 
 		<!-- Bootstrap is served from the app itself, so the demo needs no CDN -->
@@ -58,6 +65,14 @@
 			<plugin>
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
+				<executions>
+					<execution>
+						<!-- Provides the version shown by /api/health -->
+						<goals>
+							<goal>build-info</goal>
+						</goals>
+					</execution>
+				</executions>
 			</plugin>
 		</plugins>
 	</build>

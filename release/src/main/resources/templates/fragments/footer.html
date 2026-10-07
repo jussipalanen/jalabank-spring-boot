@@ -1,5 +1,8 @@
 <!-- Footer start -->
-<footer th:fragment="footer" class="container mt-5 mb-3 text-body-secondary small">
-    Demo application. All data is kept in memory and resets when the application restarts.
+<footer th:fragment="footer" class="jb-footer mt-5 py-4 small">
+    <div class="container d-flex flex-wrap justify-content-between gap-2">
+        <span>Jalabank demo. All data is kept in memory and resets when the application restarts.</span>
+        <span><a th:href="@{/docs}">API docs</a> · <a th:href="@{/api/health}">Health</a></span>
+    </div>
 </footer>
 <!-- Footer end -->

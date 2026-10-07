@@ -1,6 +1,6 @@
 # Jalabank Demo Application
 
-A small demo bank built with **Java 21** and **Spring Boot 4**. Add deposits and withdrawals, browse the transactions of a month with the cumulative balance after each one, and read the transactions through a REST API.
+A small demo bank built with **Java 21** and **Spring Boot 4**, with a dark blue web UI. Add, browse and delete deposits and withdrawals per customer, see the cumulative balance after each transaction, and use the same data through a REST API documented with OpenAPI at **`/docs`**.
 
 The app needs **no database**. It starts with about six months of realistic demo data (salary, rent, groceries, card payments) kept in memory, so it runs anywhere with one command. Everything you add resets when the app restarts.
 
@@ -12,31 +12,34 @@ The app needs **no database**. It starts with about six months of realistic demo
 
 | Page | What it does |
 |---|---|
-| **Home** | Shows the customer's current balance. |
-| **Add transaction** | Form for a deposit or withdrawal, with a date, customer and message. Amounts are validated (0.01 to 9 999 999, two decimals at most). |
-| **Balances** | Transactions of the chosen month and year, with the cumulative balance after each one, the balance at the end of the month, and pagination. |
-| **API docs** | The REST API endpoints with live example links. |
+| **Dashboard** (`/`) | The selected customer's current balance, this month's income and expenses, scheduled (future-dated) transactions, and the latest transactions. |
+| **Balances** (`/balances`) | One customer's transactions in a month, with the cumulative balance after each one and the month's totals. Change the month with the arrows or the filters. The list is paginated (5–1000 rows per page). Delete one transaction with its trash button, or tick several (or all on the page) and choose **Delete selected**. Both ask for confirmation first. |
+| **Add transaction** (`/transaction`) | Form for a deposit or withdrawal, with a customer, date and message. Amounts are validated (0.01 to 9 999 999, two decimals at most). A future date makes it a scheduled transaction. |
+| **API docs** (`/docs`) | Swagger UI generated from the code. Every endpoint can be tried out in the browser. |
 
-**Tech stack:** Java 21 · Spring Boot 4.1 (Web MVC, Thymeleaf, Validation, Actuator) · Bootstrap 5.3 (bundled, no CDN) · JUnit 5 + AssertJ · Docker.
+**Tech stack:** Java 21 · Spring Boot 4.1 (Web MVC, Thymeleaf, Validation, Actuator) · springdoc-openapi (Swagger UI) · Bootstrap 5.3 dark mode with a custom navy theme (bundled, no CDN) · JUnit 5 + AssertJ · Docker.
 
 <details>
 <summary><b>How the demo data works</b></summary>
 
-- `DemoDataSeeder` creates two customers (John Doe and Jane Doe) and generates transactions from the start of the month six months ago up to today, so the current month always has data.
+- `DemoDataSeeder` creates two customers, John Doe and Jane Doe, each with their own transactions (salary, rent, groceries, bills) from the start of the month six months ago up to today, so the current month always has data.
 - The generator uses a fixed random seed, so the amounts are the same on every start.
 - Data lives in in-memory repositories (`CustomerRepository`, `TransactionRepository`). There is no database, and nothing is written to disk.
-- To keep a public demo from growing without limit, the app accepts at most 10 000 transactions. Restart it to reset.
+- To keep a public demo from growing without limit, the app accepts at most 10 000 transactions. Delete some, or restart the app to reset.
 
 </details>
 
 <details>
 <summary><b>How the balances are calculated</b></summary>
 
-All amounts are `BigDecimal`, so there are no floating-point rounding errors. `TransactionService` does the calculations:
+All amounts are `BigDecimal`, so there are no floating-point rounding errors. `TransactionService` does the calculations, and every balance belongs to **one customer**: another customer's transactions never change it.
 
-- **Current balance:** the sum of all transactions.
-- **Cumulative balance:** a running total over all transactions in date order. Transactions on the same date keep the order they were added in.
-- **Month balance:** the cumulative balance after the last transaction on or before the last day of the month.
+- **Cumulative balance:** a running total over the customer's transactions in booking order: by date, and in the order they were added within the same date.
+- **Current balance:** the customer's balance today. Transactions dated in the future are not counted yet; the dashboard shows them as *scheduled*.
+- **Month-end balance:** the customer's balance after the last transaction on or before the last day of the month.
+- **Income / expenses:** the sum of the month's deposits and of its withdrawals.
+
+The tests recompute every cumulative balance independently to check this.
 
 </details>
 
@@ -63,7 +66,8 @@ Open <http://localhost:8080>.
 | Build a runnable jar | `./mvnw package`, which creates `target/jalabank.jar` |
 | Run the jar | `java -jar target/jalabank.jar` |
 | Use another port | `PORT=9090 java -jar target/jalabank.jar` |
-| Health check | `curl http://localhost:8080/actuator/health` |
+| Health check | `curl http://localhost:8080/api/health` (or `/actuator/health`) |
+| API docs | <http://localhost:8080/docs> |
 
 On Windows, use `mvnw.cmd` instead of `./mvnw`.
 
@@ -188,38 +192,87 @@ No environment variables are needed. Render tells the app which port to use thro
 
 ## REST API
 
-Base URL: `http://localhost:8080/api/v1`, or your Render URL followed by `/api/v1`.
+**Interactive docs:** open **`/docs`** (for example <http://localhost:8080/docs>). It's Swagger UI, generated by [springdoc-openapi](https://springdoc.org) from the controllers, so it always matches the code. Pick an endpoint, fill in the parameters and choose **Execute** to send a real request. The raw OpenAPI 3.1 description is at `/v3/api-docs`, for importing into Postman or a client generator.
+
+Errors are returned as JSON [problem details](https://www.rfc-editor.org/rfc/rfc9457) with `status`, `title` and `detail`.
 
 | Method | Endpoint | Description |
 |---|---|---|
-| `GET` | `/transactions` | The transactions, newest first by default |
-| `GET` | `/transactions/count` | The number of transactions |
-| `GET` | `/customers` | All customers |
-| `GET` | `/customers/{id}` | One customer, or `404` if it doesn't exist |
+| `GET` | `/api/v1/transactions` | One page of transactions (filter by customer, sort) |
+| `GET` | `/api/v1/transactions/{id}` | One transaction, or `404` |
+| `GET` | `/api/v1/transactions/count` | Number of transactions |
+| `POST` | `/api/v1/transactions` | Add a transaction (`201` with a `Location` header) |
+| `DELETE` | `/api/v1/transactions/{id}` | Delete one transaction (`204`, or `404`) |
+| `DELETE` | `/api/v1/transactions?ids=…&ids=…` | Delete several; reports how many were deleted and which ids were not found |
+| `GET` | `/api/v1/customers` | One page of customers |
+| `GET` | `/api/v1/customers/{id}` | One customer, or `404` |
+| `GET` | `/api/health` | Health status, application name and version, uptime and transaction count; `503` when unhealthy |
+| `GET` | `/actuator/health` | Spring Boot's own health check (used by Docker and Render) |
 
 <details>
-<summary><b>Query parameters for <code>/transactions</code></b></summary>
+<summary><b>Pagination and sorting</b></summary>
+
+List endpoints return one page at a time:
 
 | Parameter | Values | Default |
 |---|---|---|
 | `page` | `1`, `2`, … (one-based) | `1` |
-| `size` | page size | all transactions |
-| `sortBy` | `id`, `amount`, `date` | `date` |
-| `sortDirection` | `ASC`, `DESC` (any case) | `DESC` |
+| `size` | `1`–`1000` | `20` |
+| `customerId` | a customer id (transactions only) | all customers |
+| `sortBy` | `date`, `amount`, `id` (transactions only) | `date` |
+| `sortDirection` | `DESC`, `ASC`, any case (transactions only) | `DESC` |
 
 An unknown `sortBy` or `sortDirection` returns `400 Bad Request`.
 
 ```bash
-curl "http://localhost:8080/api/v1/transactions?page=1&size=3&sortBy=date&sortDirection=DESC"
+curl "http://localhost:8080/api/v1/transactions?customerId=1&page=1&size=2"
 ```
 
 ```json
-[
-  { "id": "0b4f5d2e-6a8c-4a4e-9a7e-1f2b3c4d5e6f", "amount": -54.20, "date": "2026-10-04" },
-  { "id": "5c2a7e90-3d1b-4f6a-8c9e-2a3b4c5d6e7f", "amount": -950.00, "date": "2026-10-03" },
-  { "id": "9e8d7c6b-5a4f-4e3d-8c2b-1a0f9e8d7c6b", "amount": 3200.00, "date": "2026-10-01" }
-]
+{
+  "content": [
+    { "id": "3f1c2b9e-8d4a-4c1e-9b7f-2a6d5e4c3b21", "customerId": 1, "date": "2026-10-03", "amount": -46.91, "message": "Card payment" },
+    { "id": "7a0e9d8c-1b2a-4c3d-8e4f-5a6b7c8d9e0f", "customerId": 1, "date": "2026-10-03", "amount": -103.72, "message": "Groceries" }
+  ],
+  "page": 1,
+  "size": 2,
+  "totalElements": 65,
+  "totalPages": 33
+}
 ```
+
+</details>
+
+<details>
+<summary><b>Add and delete with curl</b></summary>
+
+```bash
+# Add a withdrawal for customer 1 (the date defaults to today)
+curl -X POST http://localhost:8080/api/v1/transactions \
+  -H "Content-Type: application/json" \
+  -d '{"customerId": 1, "amount": -12.50, "message": "Coffee"}'
+
+# Delete one
+curl -X DELETE http://localhost:8080/api/v1/transactions/3f1c2b9e-8d4a-4c1e-9b7f-2a6d5e4c3b21
+
+# Delete several
+curl -X DELETE "http://localhost:8080/api/v1/transactions?ids=<id1>&ids=<id2>"
+```
+
+</details>
+
+<details>
+<summary><b>Health check</b></summary>
+
+```bash
+curl http://localhost:8080/api/health
+```
+
+```json
+{ "status": "UP", "application": "jalabank", "version": "2.1.0", "uptimeSeconds": 3600, "transactions": 107, "time": "2026-10-07T21:30:00Z" }
+```
+
+`/api/health` takes its status from the actuator's `/actuator/health`. Both appear in `/docs`.
 
 </details>
 
@@ -241,13 +294,15 @@ release/
 └── src/
     ├── main/java/jussinet/jalabank/release/
     │   ├── ReleaseApplication.java      entry point
-    │   ├── controller/                  web pages and REST API
-    │   ├── model/                       records: Customer, Transaction, StatementRow, …
+    │   ├── api/                         REST API, health check and OpenAPI settings
+    │   ├── controller/                  web pages
+    │   ├── model/                       records: Customer, Transaction, StatementRow, ApiPage, …
     │   ├── repository/                  in-memory stores
     │   ├── service/                     balance calculations and demo data
     │   └── web/                         form object and money formatting
     ├── main/resources/
     │   ├── application.properties
+    │   ├── static/                      theme (css/app.css) and page script (js/app.js)
     │   └── templates/                   Thymeleaf pages
     └── test/                            unit and web tests
 ```
@@ -259,7 +314,7 @@ release/
 
 - User registration and login
 - Strong authentication for login and confirming transactions
-- Per-customer balances and filters on the transaction view
+- Search and category filters on the transaction view
 - An optional real database (for example PostgreSQL) behind the same repositories
 
 </details>
@@ -269,9 +324,9 @@ release/
 ## Screenshots
 
 <details open>
-<summary><b>Balances: monthly transactions with cumulative balances</b></summary>
+<summary><b>Balances: monthly transactions with cumulative balances, selection and pagination</b></summary>
 
-![Balances page](screenshots/screenshot3.png)
+![Balances page with two transactions selected](screenshots/screenshot3.png)
 
 </details>
 
@@ -283,15 +338,15 @@ release/
 </details>
 
 <details>
-<summary><b>Home</b></summary>
+<summary><b>Dashboard</b></summary>
 
-![Home page with the current balance](screenshots/screenshot1.png)
+![Dashboard with balance, monthly totals and recent transactions](screenshots/screenshot1.png)
 
 </details>
 
 <details>
-<summary><b>API docs</b></summary>
+<summary><b>API docs (Swagger UI at /docs)</b></summary>
 
-![API docs page](screenshots/screenshot4.png)
+![Swagger UI with the Jalabank API](screenshots/screenshot4.png)
 
 </details>

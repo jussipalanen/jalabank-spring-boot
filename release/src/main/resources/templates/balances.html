@@ -1,100 +1,197 @@
 <!DOCTYPE html>
-<!-- To use thymeleaf -->
-<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<html xmlns:th="http://www.thymeleaf.org" lang="en" data-bs-theme="dark">
 
-<head th:replace="~{fragments/header :: head}"></head>
+<head th:replace="~{fragments/header :: head('Balances')}"></head>
 
 <body>
-    <div th:replace="~{fragments/navigation :: navigation}"></div>
-    <div class="container">
-        <div class="row mt-3">
-            <div class="col">
-                <h2>Balances</h2>
-                <p>
-                    This lists the transactions of a month, shows the balance at the end of the month, and the
-                    cumulative balance after each transaction.
+    <nav th:replace="~{fragments/navigation :: navigation('balances')}"></nav>
+    <main class="container py-4">
+        <div th:replace="~{fragments/alerts :: alerts}"></div>
+
+        <div class="d-flex flex-wrap align-items-end justify-content-between gap-3 mb-3">
+            <div>
+                <h1 class="h3 mb-1">Balances</h1>
+                <p class="text-body-secondary mb-0">
+                    <span th:text="${customer.fullName}"></span>'s transactions in
+                    <b th:text="${monthName}"></b>, with the balance after each one.
                 </p>
-                <a th:replace="~{fragments/back :: back}"></a>
-                <form method="GET">
-                    <div class="row mb-3 mt-3">
-                        <div class="col">
-                            <label for="year" class="form-label">Year:</label>
-                            <select class="form-select" name="year" id="year">
-                                <option th:each="yearVal: ${years}" th:selected="${year == yearVal}"
-                                    th:value="${yearVal}" th:text="${yearVal}"></option>
-                            </select>
-                        </div>
-                        <div class="col">
-                            <label for="month" class="form-label">Month:</label>
-                            <select class="form-select" name="month" id="month">
-                                <option th:each="monthItem: ${months}" th:selected="${month == monthItem.number}"
-                                    th:value="${monthItem.number}" th:text="${monthItem.name}"></option>
-                            </select>
-                        </div>
-                        <div class="col">
-                            <label for="size" class="form-label">Show:</label>
-                            <select class="form-select" name="size" id="size">
-                                <option th:each="sizeVal: ${pageSizes}" th:selected="${size == sizeVal}"
-                                    th:value="${sizeVal}" th:text="${sizeVal}"></option>
-                            </select>
-                        </div>
+            </div>
+            <div class="btn-group" role="group" aria-label="Change month">
+                <a class="btn btn-outline-light"
+                    th:href="@{/balances(customerId=${customer.id}, year=${previousMonth.year}, month=${previousMonth.monthValue}, size=${size})}">&larr; Previous month</a>
+                <a class="btn btn-outline-light"
+                    th:href="@{/balances(customerId=${customer.id}, year=${nextMonth.year}, month=${nextMonth.monthValue}, size=${size})}">Next month &rarr;</a>
+            </div>
+        </div>
+
+        <!-- Filters -->
+        <div class="card mb-4">
+            <div class="card-body">
+                <form method="get" class="row g-3 align-items-end">
+                    <div class="col-sm-6 col-lg-3">
+                        <label for="customerId" class="form-label small text-body-secondary">Customer</label>
+                        <select th:replace="~{fragments/customer :: picker}"></select>
                     </div>
-                    <div class="row">
-                        <div class="col">
-                            <input type="submit" class="btn btn-primary" value="Search">
-                        </div>
+                    <div class="col-6 col-lg-2">
+                        <label for="year" class="form-label small text-body-secondary">Year</label>
+                        <select class="form-select" name="year" id="year" data-autosubmit>
+                            <option th:each="yearVal : ${years}" th:selected="${year == yearVal}"
+                                th:value="${yearVal}" th:text="${yearVal}"></option>
+                        </select>
+                    </div>
+                    <div class="col-6 col-lg-3">
+                        <label for="month" class="form-label small text-body-secondary">Month</label>
+                        <select class="form-select" name="month" id="month" data-autosubmit>
+                            <option th:each="monthItem : ${months}" th:selected="${month == monthItem.number}"
+                                th:value="${monthItem.number}" th:text="${monthItem.name}"></option>
+                        </select>
+                    </div>
+                    <div class="col-6 col-lg-2">
+                        <label for="size" class="form-label small text-body-secondary">Rows per page</label>
+                        <select class="form-select" name="size" id="size" data-autosubmit>
+                            <option th:each="sizeVal : ${pageSizes}" th:selected="${size == sizeVal}"
+                                th:value="${sizeVal}" th:text="${sizeVal}"></option>
+                        </select>
+                    </div>
+                    <div class="col-6 col-lg-2 d-grid">
+                        <button type="submit" class="btn btn-primary">Show</button>
                     </div>
                 </form>
+            </div>
+        </div>
 
-                <div class="table-responsive">
-                    <table class="table">
-                        <thead>
-                            <tr>
-                                <th scope="col">Transaction ID</th>
-                                <th scope="col" class="text-end">Amount</th>
-                                <th scope="col">Date</th>
-                                <th scope="col">Message</th>
-                                <th scope="col" class="text-end">Cumulative balance</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr th:if="${transactions.totalElements == 0}">
-                                <td colspan="5" class="text-body-secondary">No transactions in this month.</td>
-                            </tr>
-                            <tr th:each="row: ${transactions.content}">
-                                <th scope="row" class="font-monospace small" th:text="${row.id}"></th>
-                                <td class="text-end" th:classappend="${row.amount.signum() >= 0 ? 'text-success' : 'text-danger'}"
-                                    th:text="${@money.format(row.amount)}"></td>
-                                <td th:text="${#temporals.format(row.date, 'dd.MM.yyyy')}"></td>
-                                <td th:text="${row.message}"></td>
-                                <td class="text-end text-primary" th:text="${@money.format(row.cumulativeBalance)}"></td>
-                            </tr>
-                        </tbody>
-                    </table>
+        <!-- Month summary -->
+        <div class="row g-3 mb-4">
+            <div class="col-6 col-lg-3">
+                <div class="card stat-card stat-primary h-100">
+                    <div class="card-body">
+                        <div class="stat-label">Month-end balance</div>
+                        <div class="stat-value" id="month-balance" th:text="${@money.format(summary.endBalance)}"></div>
+                    </div>
                 </div>
+            </div>
+            <div class="col-6 col-lg-3">
+                <div class="card stat-card h-100">
+                    <div class="card-body">
+                        <div class="stat-label">Income</div>
+                        <div class="stat-value amount-positive" th:text="${@money.format(summary.income)}"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-6 col-lg-3">
+                <div class="card stat-card h-100">
+                    <div class="card-body">
+                        <div class="stat-label">Expenses</div>
+                        <div class="stat-value amount-negative" th:text="${@money.format(summary.expenses)}"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-6 col-lg-3">
+                <div class="card stat-card h-100">
+                    <div class="card-body">
+                        <div class="stat-label">Transactions</div>
+                        <div class="stat-value" th:text="${summary.count}"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
 
-                <nav class="mt-3" th:if="${transactions.totalPages > 1}" aria-label="Pages">
-                    <ul class="pagination flex-wrap">
-                        <li class="page-item" th:each="pageNumber : ${transactions.pageNumbers}"
-                            th:classappend="${pageNumber == transactions.number + 1} ? active">
+        <!-- Transactions -->
+        <form method="post" th:action="@{/transactions/delete}" class="card">
+            <input type="hidden" name="customerId" th:value="${customer.id}">
+            <input type="hidden" name="year" th:value="${year}">
+            <input type="hidden" name="month" th:value="${month}">
+            <input type="hidden" name="page" th:value="${transactions.currentPage}">
+            <input type="hidden" name="size" th:value="${size}">
+
+            <div class="card-header d-flex flex-wrap align-items-center justify-content-between gap-2">
+                <h2 class="h6 mb-0">Transactions</h2>
+                <div class="d-flex gap-2" th:if="${transactions.totalElements > 0}">
+                    <button type="submit" class="btn btn-sm btn-outline-danger" id="delete-selected"
+                        data-confirm="Delete the selected transactions?">
+                        Delete selected (<span id="selected-count">0</span>)
+                    </button>
+                    <a class="btn btn-sm btn-primary" th:href="@{/transaction(customerId=${customer.id})}">Add transaction</a>
+                </div>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead>
+                        <tr>
+                            <th scope="col" style="width: 2.5rem">
+                                <input class="form-check-input" type="checkbox" id="select-all"
+                                    aria-label="Select all transactions on this page"
+                                    th:disabled="${transactions.totalElements == 0}">
+                            </th>
+                            <th scope="col">Date</th>
+                            <th scope="col">Message</th>
+                            <th scope="col" class="d-none d-lg-table-cell">Transaction ID</th>
+                            <th scope="col" class="text-end">Amount</th>
+                            <th scope="col" class="text-end">Cumulative balance</th>
+                            <th scope="col" class="text-end"><span class="visually-hidden">Actions</span></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:if="${transactions.totalElements == 0}">
+                            <td colspan="7" class="text-body-secondary text-center py-4">No transactions in this month.</td>
+                        </tr>
+                        <tr th:each="row : ${transactions.content}">
+                            <td>
+                                <input class="form-check-input row-select" type="checkbox" name="ids" th:value="${row.id}"
+                                    th:attr="aria-label=|Select ${row.message} on ${#temporals.format(row.date, 'dd.MM.yyyy')}|">
+                            </td>
+                            <td class="text-nowrap" th:text="${#temporals.format(row.date, 'dd.MM.yyyy')}"></td>
+                            <td th:text="${row.message}"></td>
+                            <td class="d-none d-lg-table-cell tx-id" th:text="${row.id}"></td>
+                            <td class="text-end amount"
+                                th:classappend="${row.amount.signum() >= 0 ? 'amount-positive' : 'amount-negative'}"
+                                th:text="${@money.format(row.amount)}"></td>
+                            <td class="text-end amount amount-balance" th:text="${@money.format(row.cumulativeBalance)}"></td>
+                            <td class="text-end">
+                                <button type="submit" name="id" th:value="${row.id}"
+                                    class="btn btn-sm btn-outline-danger btn-icon" title="Delete"
+                                    data-confirm="Delete this transaction?"
+                                    th:attr="aria-label=|Delete ${row.message} on ${#temporals.format(row.date, 'dd.MM.yyyy')}|">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor"
+                                        viewBox="0 0 16 16" aria-hidden="true">
+                                        <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0z" />
+                                        <path d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4zM2.5 3h11V2h-11z" />
+                                    </svg>
+                                </button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination -->
+            <div class="card-footer d-flex flex-wrap align-items-center justify-content-between gap-2"
+                th:if="${transactions.totalElements > 0}">
+                <span class="small text-body-secondary" id="page-info"
+                    th:text="|Showing ${transactions.number * transactions.size + 1}–${transactions.number * transactions.size + #lists.size(transactions.content)} of ${transactions.totalElements}|"></span>
+                <nav th:if="${transactions.totalPages > 1}" aria-label="Pages">
+                    <ul class="pagination pagination-sm flex-wrap">
+                        <li class="page-item" th:classappend="${!transactions.hasPrevious} ? disabled">
                             <a class="page-link"
-                                th:href="@{/balances(page=${pageNumber}, size=${size}, month=${month}, year=${year})}"
-                                th:text="${pageNumber}"></a>
+                                th:href="@{/balances(customerId=${customer.id}, year=${year}, month=${month}, size=${size}, page=${transactions.currentPage - 1})}">&laquo; Previous</a>
+                        </li>
+                        <li class="page-item" th:each="p : ${transactions.pageWindow}"
+                            th:classappend="${p == null ? 'disabled' : (p == transactions.currentPage ? 'active' : '')}">
+                            <span class="page-link" th:if="${p == null}">&hellip;</span>
+                            <a class="page-link" th:if="${p != null}" th:text="${p}"
+                                th:attr="aria-current=${p == transactions.currentPage ? 'page' : null}"
+                                th:href="@{/balances(customerId=${customer.id}, year=${year}, month=${month}, size=${size}, page=${p})}"></a>
+                        </li>
+                        <li class="page-item" th:classappend="${!transactions.hasNext} ? disabled">
+                            <a class="page-link"
+                                th:href="@{/balances(customerId=${customer.id}, year=${year}, month=${month}, size=${size}, page=${transactions.currentPage + 1})}">Next &raquo;</a>
                         </li>
                     </ul>
                 </nav>
-
-                <div class="row mt-3">
-                    <div class="col">
-                        <p>
-                            Month balance: <b th:text="${@money.format(monthBalance)}"></b>
-                        </p>
-                    </div>
-                </div>
-
             </div>
-        </div>
-    </div>
+        </form>
+    </main>
     <footer th:replace="~{fragments/footer :: footer}"></footer>
 </body>
 
