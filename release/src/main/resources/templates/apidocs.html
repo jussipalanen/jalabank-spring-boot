@@ -1,71 +1,56 @@
 <!DOCTYPE html>
 <!-- To use thymeleaf -->
-<html xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
 
-<head th:include="fragments/header.html"></head>
+<head th:replace="~{fragments/header :: head}"></head>
 
 <body>
-    <div th:include="fragments/navigation.html"></div>
+    <div th:replace="~{fragments/navigation :: navigation}"></div>
     <div class="container">
         <div class="row mt-3">
             <div class="col">
                 <h2>API Docs</h2>
-                <div th:include="fragments/back.html"></div>
-                <p>This page is for the API documentation and examples.</p>
+                <a th:replace="~{fragments/back :: back}"></a>
+                <p class="mt-3">This page is for the API documentation and examples.</p>
+
                 <div class="api-item">
                     <h3>Transactions</h3>
-                    <p>Fetch all transactions</p>
-                    <p>Optional query parameters in request uri:</p>
+                    <p>Fetch the transactions.</p>
+                    <p>Optional query parameters in the request URI:</p>
                     <ul>
-                        <li>?page=1</li>
-                        <li>?size=10</li>
-                        <li>?sortBy=id|date|amount</li>
-                        <li>?sortDirection=ASC|DESC</li>
+                        <li><code>page=1</code> (one-based)</li>
+                        <li><code>size=10</code> (all transactions when left out)</li>
+                        <li><code>sortBy=id|date|amount</code> (default <code>date</code>)</li>
+                        <li><code>sortDirection=ASC|DESC</code> (default <code>DESC</code>)</li>
                     </ul>
-
                     <p>
-                        Request URI: <code th:text=|${baseApiUrl}/transactions|></code>
+                        Request URI: <a th:href="|${baseApiUrl}/transactions?page=1&size=3|"><code th:text="|${baseApiUrl}/transactions?page=1&size=3|"></code></a>
                     </p>
-                    <pre>
-            <code>  
-                    [
-                        {
-                            "amount": 5000.00,
-                            "id": "7f000101-8972-121a-8189-731360fd0005",
-                            "date": "2023-07-28T21:00:00.000+00:00"
-                        },
-                        {
-                            "amount": 10.0,
-                            "id": "7f000101-8972-121a-8189-72e2a8620000",
-                            "date": "2023-07-20T10:40:04.181+00:00"
-                        },
-                        {
-                            "amount": -500.00,
-                            "id": "7f000101-8972-121a-8189-72e799dd0003",
-                            "date": "2023-07-11T21:00:00.000+00:00"
-                        },
-                        {
-                            "amount": 12345.0,
-                            "id": "7f000101-8972-121a-8189-72e6041f0001",
-                            "date": "2023-06-30T21:00:00.000+00:00"
-                        },
-                        {
-                            "amount": 666.0,
-                            "id": "7f000101-8972-121a-8189-72e7e43c0004",
-                            "date": "2023-06-05T21:00:00.000+00:00"
-                        },
-                        {
-                            "amount": 555555.0,
-                            "id": "7f000101-8972-121a-8189-72e685a70002",
-                            "date": "2023-05-31T21:00:00.000+00:00"
-                        }
-                    ]
-                    </code>
-                </pre>
+<pre class="bg-body-tertiary p-3"><code>[
+  { "id": "0b4f5d2e-6a8c-4a4e-9a7e-1f2b3c4d5e6f", "amount": -54.20, "date": "2026-10-04" },
+  { "id": "5c2a7e90-3d1b-4f6a-8c9e-2a3b4c5d6e7f", "amount": -950.00, "date": "2026-10-03" },
+  { "id": "9e8d7c6b-5a4f-4e3d-8c2b-1a0f9e8d7c6b", "amount": 3200.00, "date": "2026-10-01" }
+]</code></pre>
+
+                    <p>Count of the transactions:</p>
+                    <p>
+                        Request URI: <a th:href="|${baseApiUrl}/transactions/count|"><code th:text="|${baseApiUrl}/transactions/count|"></code></a>
+                    </p>
+                </div>
+
+                <div class="api-item mt-4">
+                    <h3>Customers</h3>
+                    <p>
+                        All customers: <a th:href="|${baseApiUrl}/customers|"><code th:text="|${baseApiUrl}/customers|"></code></a>
+                    </p>
+                    <p>
+                        A single customer: <code th:text="|${baseApiUrl}/customers/{id}|"></code>
+                    </p>
                 </div>
             </div>
         </div>
     </div>
+    <footer th:replace="~{fragments/footer :: footer}"></footer>
 </body>
 
 </html>

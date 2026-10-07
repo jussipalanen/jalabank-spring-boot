@@ -8,12 +8,13 @@
     <div th:replace="~{fragments/navigation :: navigation}"></div>
     <div class="container">
         <div class="row mt-3">
-            <h2>Dashboard</h2>
-            <p>
-                Hello customer, your current balance is: <b th:text="${@money.format(balance)}"></b>
-            </p>
+            <div class="col">
+                <h2 th:text="|Error ${status}|">Error</h2>
+                <p th:text="${error}"></p>
+                <a th:replace="~{fragments/back :: back}"></a>
+            </div>
         </div>
     </div>
-    <footer th:replace="~{fragments/footer :: footer}"></footer>
 </body>
+
 </html>

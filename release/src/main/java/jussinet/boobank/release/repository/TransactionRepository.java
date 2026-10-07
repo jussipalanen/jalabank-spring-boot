@@ -1,43 +1,36 @@
 package jussinet.boobank.release.repository;
 
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
-import java.util.UUID;
 
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
+import org.springframework.stereotype.Repository;
 
-import jussinet.boobank.release.entity.Transaction;
-import jussinet.boobank.release.repository.queryinterfaces.TransactionApiData;
-import jussinet.boobank.release.repository.queryinterfaces.TransactionData;
+import jussinet.boobank.release.model.Transaction;
 
-public interface TransactionRepository extends JpaRepository<Transaction, UUID> {
+/**
+ * In-memory transaction store. Contents live only as long as the application runs.
+ */
+@Repository
+public class TransactionRepository {
 
-    @Query(value = "SELECT id, created_at as date, amount FROM transactions", nativeQuery = true)
-    List<TransactionApiData> findAllTransactions(Pageable pageable);
+    private final List<Transaction> transactions = new ArrayList<>();
+
+    public synchronized Transaction save(Transaction transaction) {
+        transactions.add(transaction);
+        return transaction;
+    }
 
     /**
-     * Fetching all of the transactions with the specific fields and pagination, and date range
-     * @return
+     * All transactions in booking order: by date, and by insertion order within the same date.
      */
-    String customQueryStr = "SELECT t.* " + 
-        "FROM ( " + 
-        "  SELECT  " + 
-        " id, " + 
-        " amount, " + 
-        " DATE(created_at) AS date,  " + 
-        " comment as message, " + 
-        " customer_id, " + 
-        " SUM(amount) OVER(ORDER BY created_at) AS cumulativesum  " + 
-        "  FROM transactions " + 
-        "  WHERE (:endDateStr IS NULL OR DATE(created_at) <= TO_TIMESTAMP(:endDateStr, 'YYYY-MM-DD')) " + 
-        ") t  " + 
-        "WHERE (:startDateStr IS NULL OR date >= TO_TIMESTAMP(:startDateStr, 'YYYY-MM-DD')) " + 
-    "ORDER by date ASC";
+    public synchronized List<Transaction> findAllChronological() {
+        List<Transaction> copy = new ArrayList<>(transactions);
+        copy.sort(Comparator.comparing(Transaction::date));
+        return copy;
+    }
 
-    // Added countQuery for the countable query (incl. subqueries) to work the cumulatives
-    @Query(value = customQueryStr, countQuery = customQueryStr, nativeQuery = true)
-    Page<TransactionData> findAllPaged(@Param(value = "startDateStr") String startDateStr, @Param(value = "endDateStr") String endDateStr, Pageable page);
+    public synchronized int count() {
+        return transactions.size();
+    }
 }

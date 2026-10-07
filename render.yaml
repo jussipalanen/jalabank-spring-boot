@@ -1,0 +1,13 @@
+# Render Blueprint: https://render.com/docs/blueprint-spec
+# Creates one Docker web service. No database is needed, the app runs on in-memory demo data.
+services:
+  - type: web
+    name: boobank
+    runtime: docker
+    plan: free
+    dockerfilePath: ./release/Dockerfile
+    dockerContext: ./release
+    healthCheckPath: /actuator/health
+    buildFilter:
+      paths:
+        - release/**
