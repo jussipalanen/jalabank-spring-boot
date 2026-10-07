@@ -1,4 +1,4 @@
-package jussinet.boobank.release;
+package jussinet.jalabank.release;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -12,7 +12,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.web.servlet.assertj.MockMvcTester;
 
-import jussinet.boobank.release.service.TransactionService;
+import jussinet.jalabank.release.service.TransactionService;
 
 @SpringBootTest
 @AutoConfigureMockMvc

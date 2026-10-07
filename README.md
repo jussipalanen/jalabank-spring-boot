@@ -1,4 +1,4 @@
-# Boobank Demo Application
+# Jalabank Demo Application
 
 A small demo bank built with **Java 21** and **Spring Boot 4**. Add deposits and withdrawals, browse the transactions of a month with the cumulative balance after each one, and read the transactions through a REST API.
 
@@ -47,8 +47,8 @@ All amounts are `BigDecimal`, so there are no floating-point rounding errors. `T
 **Requirements:** Java 21 or newer. Maven is optional, because the project includes the Maven wrapper.
 
 ```bash
-git clone https://github.com/jussipalanen/boobank-java-spring-boot.git
-cd boobank-java-spring-boot/release
+git clone https://github.com/jussipalanen/jalabank-java-spring-boot.git
+cd jalabank-java-spring-boot/release
 ./mvnw spring-boot:run
 ```
 
@@ -60,9 +60,9 @@ Open <http://localhost:8080>.
 | Task | Command (in `release/`) |
 |---|---|
 | Run the tests | `./mvnw test` |
-| Build a runnable jar | `./mvnw package`, which creates `target/boobank.jar` |
-| Run the jar | `java -jar target/boobank.jar` |
-| Use another port | `PORT=9090 java -jar target/boobank.jar` |
+| Build a runnable jar | `./mvnw package`, which creates `target/jalabank.jar` |
+| Run the jar | `java -jar target/jalabank.jar` |
+| Use another port | `PORT=9090 java -jar target/jalabank.jar` |
 | Health check | `curl http://localhost:8080/actuator/health` |
 
 On Windows, use `mvnw.cmd` instead of `./mvnw`.
@@ -76,7 +76,7 @@ On Windows, use `mvnw.cmd` instead of `./mvnw`.
 **Requirements:** [Docker Desktop](https://docs.docker.com/get-docker/) or Docker Engine with the Compose plugin. On Windows, enable the WSL 2 integration.
 
 ```bash
-cd boobank-java-spring-boot/release
+cd jalabank-java-spring-boot/release
 docker compose up --build
 ```
 
@@ -96,8 +96,8 @@ sh toolbox stop    # stop and remove the container
 Without Compose:
 
 ```bash
-docker build -t boobank-demo .
-docker run --rm -p 8080:8080 boobank-demo
+docker build -t jalabank-demo .
+docker run --rm -p 8080:8080 jalabank-demo
 ```
 
 The image is a two-stage build. The first stage runs the tests and builds the jar with Maven, and the second runs it on a slim Java 21 runtime as a non-root user. Java's memory is capped at 75 % of the container's limit, so the app also fits small 512 MB hosting plans.
@@ -116,9 +116,9 @@ The repository has a `render.yaml` blueprint at its root.
 
 1. Push the code to GitHub. Render deploys from the branch you choose, usually `main`.
 2. In the Render dashboard, choose **New → Blueprint**.
-3. Connect your GitHub account if you haven't already, and pick the `boobank-java-spring-boot` repository.
-4. Render reads `render.yaml` and shows one web service named **boobank**. Choose **Apply**.
-5. The first build takes a few minutes. When it finishes, open the `https://boobank-xxxx.onrender.com` URL shown on the service page.
+3. Connect your GitHub account if you haven't already, and pick the `jalabank-java-spring-boot` repository.
+4. Render reads `render.yaml` and shows one web service named **jalabank**. Choose **Apply**.
+5. The first build takes a few minutes. When it finishes, open the `https://jalabank-xxxx.onrender.com` URL shown on the service page.
 
 ### Option B: Set it up by hand
 
@@ -205,7 +205,7 @@ release/
 ├── toolbox                      helper script for Docker Compose
 ├── pom.xml
 └── src/
-    ├── main/java/jussinet/boobank/release/
+    ├── main/java/jussinet/jalabank/release/
     │   ├── ReleaseApplication.java      entry point
     │   ├── controller/                  web pages and REST API
     │   ├── model/                       records: Customer, Transaction, StatementRow, …

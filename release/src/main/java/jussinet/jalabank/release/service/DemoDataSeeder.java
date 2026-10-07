@@ -1,4 +1,4 @@
-package jussinet.boobank.release.service;
+package jussinet.jalabank.release.service;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -9,8 +9,8 @@ import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.stereotype.Component;
 
-import jussinet.boobank.release.model.Customer;
-import jussinet.boobank.release.repository.CustomerRepository;
+import jussinet.jalabank.release.model.Customer;
+import jussinet.jalabank.release.repository.CustomerRepository;
 
 /**
  * Fills the in-memory store with demo data on startup. Everything resets when the application restarts.

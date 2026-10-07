@@ -1,4 +1,4 @@
-package jussinet.boobank.release.model;
+package jussinet.jalabank.release.model;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;

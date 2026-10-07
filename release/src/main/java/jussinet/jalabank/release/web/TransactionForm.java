@@ -1,4 +1,4 @@
-package jussinet.boobank.release.web;
+package jussinet.jalabank.release.web;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;

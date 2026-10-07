@@ -1,4 +1,4 @@
-package jussinet.boobank.release.model;
+package jussinet.jalabank.release.model;
 
 /**
  * A bank customer. Passwords and other credentials are intentionally not part of the demo.

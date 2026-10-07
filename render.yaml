@@ -2,7 +2,7 @@
 # Creates one Docker web service. No database is needed, the app runs on in-memory demo data.
 services:
   - type: web
-    name: boobank
+    name: jalabank
     runtime: docker
     plan: free
     dockerfilePath: ./release/Dockerfile

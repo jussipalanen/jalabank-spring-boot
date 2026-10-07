@@ -1,4 +1,4 @@
-package jussinet.boobank.release.controller;
+package jussinet.jalabank.release.controller;
 
 import java.util.List;
 
@@ -9,9 +9,9 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
-import jussinet.boobank.release.model.SortDirection;
-import jussinet.boobank.release.model.TransactionApiData;
-import jussinet.boobank.release.service.TransactionService;
+import jussinet.jalabank.release.model.SortDirection;
+import jussinet.jalabank.release.model.TransactionApiData;
+import jussinet.jalabank.release.service.TransactionService;
 
 /**
  * Transaction API
