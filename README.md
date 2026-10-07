@@ -75,22 +75,53 @@ On Windows, use `mvnw.cmd` instead of `./mvnw`.
 
 **Requirements:** [Docker Desktop](https://docs.docker.com/get-docker/) or Docker Engine with the Compose plugin. On Windows, enable the WSL 2 integration.
 
+From the project root, use the `dev` helper script:
+
 ```bash
-cd jalabank-spring-boot/release
-docker compose up --build
+cd jalabank-spring-boot
+./dev up        # build, start in the background and wait until it's ready
+./dev logs      # follow the logs (Ctrl+C stops following, the app keeps running)
+./dev down      # stop
 ```
 
-Open <http://localhost:8080>. Stop with `Ctrl+C`, or with `docker compose down`.
+Open <http://localhost:8080>. Run `./dev help` to list all commands.
 
 <details>
-<summary><b>Toolbox script and plain Docker</b></summary>
+<summary><b>All <code>dev</code> commands</b></summary>
 
-The `toolbox` script wraps the Compose commands:
+| Command | What it does |
+|---|---|
+| `./dev up` (or `start`) | Build if needed, start in the background, and wait until the app is healthy |
+| `./dev up -f` (or `fg`) | Start in the foreground with logs; `Ctrl+C` stops |
+| `./dev down` (or `stop`) | Stop and remove the container |
+| `./dev restart` | Restart the running container (the demo data resets) |
+| `./dev rebuild` | Rebuild the image from scratch, without cache, and start |
+| `./dev logs` | Follow the logs; `./dev logs -n` prints them once |
+| `./dev status` (or `ps`) | Show the container status |
+| `./dev health` | Call the health endpoint |
+| `./dev shell` (or `sh`) | Open a shell inside the running container |
+| `./dev open` | Open the app in your browser |
+| `./dev build` | Build the image only |
+| `./dev test` | Run the Maven tests inside Docker, with no local Java needed |
+| `./dev clean` | Stop the app and remove the Jalabank images |
+
+**Another port:** `JALABANK_PORT=9090 ./dev up`
+
+**Shorter command:** add an alias to your `~/.bashrc` or `~/.zshrc`, for example `alias dev="$HOME/projects/jalabank-spring-boot/dev"` (use your own path). Then `dev up` works from any folder.
+
+**Windows:** run it in WSL or Git Bash.
+
+</details>
+
+<details>
+<summary><b>Plain Docker Compose and Docker</b></summary>
+
+`dev` runs the same thing as these commands:
 
 ```bash
-sh toolbox start   # build and start
-sh toolbox build   # rebuild from scratch, without cache, and start
-sh toolbox stop    # stop and remove the container
+cd jalabank-spring-boot/release
+docker compose up --build     # Ctrl+C stops
+docker compose down
 ```
 
 Without Compose:
@@ -99,6 +130,8 @@ Without Compose:
 docker build -t jalabank-demo .
 docker run --rm -p 8080:8080 jalabank-demo
 ```
+
+The old `release/toolbox` script (`start`, `build`, `stop`) still works and now calls `dev`.
 
 The image is a two-stage build. The first stage runs the tests and builds the jar with Maven, and the second runs it on a slim Java 21 runtime as a non-root user. Java's memory is capped at 75 % of the container's limit, so the app also fits small 512 MB hosting plans.
 
@@ -198,11 +231,12 @@ curl "http://localhost:8080/api/v1/transactions?page=1&size=3&sortBy=date&sortDi
 <summary><b>Files and packages</b></summary>
 
 ```
+dev                              Docker helper script (./dev help)
 render.yaml                      Render blueprint
 release/
 ├── Dockerfile                   two-stage image build
 ├── docker-compose.yml           local Docker run
-├── toolbox                      helper script for Docker Compose
+├── toolbox                      old helper script, calls ../dev
 ├── pom.xml
 └── src/
     ├── main/java/jussinet/jalabank/release/
