@@ -1,68 +1,75 @@
 <!DOCTYPE html>
-<!-- To use thymeleaf -->
-<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<html xmlns:th="http://www.thymeleaf.org" lang="en" data-bs-theme="dark">
 
-<head th:replace="~{fragments/header :: head}"></head>
+<head th:replace="~{fragments/header :: head('Add transaction')}"></head>
 
 <body>
-    <div th:replace="~{fragments/navigation :: navigation}"></div>
-    <div class="container">
-        <div class="row mt-3">
-            <div class="col">
-                <h2>Add transaction</h2>
-                <a th:replace="~{fragments/back :: back}"></a>
-                <form th:action="@{/transaction}" th:object="${transaction}" method="post" class="form">
+    <nav th:replace="~{fragments/navigation :: navigation('transaction')}"></nav>
+    <main class="container py-4">
+        <div class="mb-4">
+            <a th:replace="~{fragments/back :: back}"></a>
+            <h1 class="h3 mt-2 mb-0">Add transaction</h1>
+        </div>
 
-                    <div class="alert alert-warning mt-3" th:if="${#fields.hasGlobalErrors()}" th:errors="*{global}"></div>
+        <div class="card">
+            <div class="card-body p-4">
+                <form th:action="@{/transaction}" th:object="${transaction}" method="post">
 
-                    <div class="row mb-3 mt-3">
-                        <div class="col-md">
+                    <div class="alert alert-warning" th:if="${#fields.hasGlobalErrors()}" th:errors="*{global}"></div>
 
-                            <!-- Amount -->
-                            <label for="amount" class="form-label">Amount (€):</label>
-                            <input class="form-control mb-3" type="number" min="0.01" max="9999999" step="0.01"
-                                th:field="*{amount}" required>
-                            <div class="alert alert-warning" th:if="${#fields.hasErrors('amount')}" th:errors="*{amount}"></div>
+                    <div class="row g-4">
+                        <div class="col-lg-6">
+                            <div class="mb-3">
+                                <label for="customerId" class="form-label">Customer</label>
+                                <select class="form-select" th:field="*{customerId}" th:errorclass="is-invalid">
+                                    <option th:each="c : ${customers}" th:value="${c.id}"
+                                        th:text="|${c.fullName} (${c.email})|"></option>
+                                </select>
+                                <div class="invalid-feedback" th:errors="*{customerId}"></div>
+                            </div>
 
-                            <!-- Transfer method -->
-                            <label for="transferMethod" class="form-label">Transfer method:</label>
-                            <select class="form-select mb-3" th:field="*{transferMethod}">
-                                <option value="DEPOSIT">Deposit</option>
-                                <option value="WITHDRAW">Withdraw</option>
-                            </select>
+                            <div class="mb-3">
+                                <span class="form-label d-block">Type</span>
+                                <div class="btn-group w-100" role="group" aria-label="Transfer method">
+                                    <input type="radio" class="btn-check" th:field="*{transferMethod}" value="DEPOSIT" id="method-deposit">
+                                    <label class="btn btn-outline-success" for="method-deposit">Deposit</label>
+                                    <input type="radio" class="btn-check" th:field="*{transferMethod}" value="WITHDRAW" id="method-withdraw">
+                                    <label class="btn btn-outline-danger" for="method-withdraw">Withdraw</label>
+                                </div>
+                            </div>
 
-                            <!-- Date -->
-                            <label for="date" class="form-label">Date:</label>
-                            <input type="date" class="form-control mb-3" th:field="*{date}" required>
-                            <div class="alert alert-warning" th:if="${#fields.hasErrors('date')}" th:errors="*{date}"></div>
-
-                            <!-- Customer -->
-                            <label for="customerId" class="form-label">Customer:</label>
-                            <select class="form-select mb-3" th:field="*{customerId}">
-                                <option th:each="customer : ${customers}" th:value="${customer.id}"
-                                    th:text="|${customer.fullName} (${customer.email})|">
-                                </option>
-                            </select>
-                            <div class="alert alert-warning" th:if="${#fields.hasErrors('customerId')}" th:errors="*{customerId}"></div>
+                            <div class="row g-3">
+                                <div class="col-sm-6">
+                                    <label for="amount" class="form-label">Amount (€)</label>
+                                    <input class="form-control" type="number" min="0.01" max="9999999" step="0.01"
+                                        th:field="*{amount}" th:errorclass="is-invalid" placeholder="0.00" required>
+                                    <div class="invalid-feedback" th:errors="*{amount}"></div>
+                                </div>
+                                <div class="col-sm-6">
+                                    <label for="date" class="form-label">Date</label>
+                                    <input type="date" class="form-control" th:field="*{date}" th:errorclass="is-invalid" required>
+                                    <div class="invalid-feedback" th:errors="*{date}"></div>
+                                    <div class="form-text">A future date makes it a scheduled transaction.</div>
+                                </div>
+                            </div>
                         </div>
 
-                        <div class="col-md">
-                            <!-- Message -->
-                            <label for="message" class="form-label">Message:</label>
-                            <textarea class="form-control" rows="10" maxlength="255" th:field="*{message}"></textarea>
-                            <div class="alert alert-warning mt-3" th:if="${#fields.hasErrors('message')}" th:errors="*{message}"></div>
+                        <div class="col-lg-6 d-flex flex-column">
+                            <label for="message" class="form-label">Message</label>
+                            <textarea class="form-control flex-grow-1" rows="6" maxlength="255" th:field="*{message}"
+                                th:errorclass="is-invalid" placeholder="What is it for?"></textarea>
+                            <div class="invalid-feedback" th:errors="*{message}"></div>
                         </div>
                     </div>
 
-                    <div class="col">
-                        <input type="submit" name="submit" value="Submit" class="btn btn-success">
-                        <input type="reset" name="reset" value="Reset" class="btn btn-primary">
+                    <div class="d-flex gap-2 mt-4">
+                        <button type="submit" class="btn btn-primary px-4">Save transaction</button>
+                        <button type="reset" class="btn btn-outline-light">Reset</button>
                     </div>
                 </form>
             </div>
         </div>
-    </div>
+    </main>
     <footer th:replace="~{fragments/footer :: footer}"></footer>
 </body>
-
 </html>

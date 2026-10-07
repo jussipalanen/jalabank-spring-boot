@@ -1,19 +1,99 @@
 <!DOCTYPE html>
-<!-- To use thymeleaf -->
-<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<html xmlns:th="http://www.thymeleaf.org" lang="en" data-bs-theme="dark">
 
-<head th:replace="~{fragments/header :: head}"></head>
+<head th:replace="~{fragments/header :: head('Dashboard')}"></head>
 
 <body>
-    <div th:replace="~{fragments/navigation :: navigation}"></div>
-    <div class="container">
-        <div class="row mt-3">
-            <h2>Dashboard</h2>
-            <p>
-                Hello customer, your current balance is: <b th:text="${@money.format(balance)}"></b>
-            </p>
+    <nav th:replace="~{fragments/navigation :: navigation('home')}"></nav>
+    <main class="container py-4">
+        <div th:replace="~{fragments/alerts :: alerts}"></div>
+
+        <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4">
+            <div>
+                <h1 class="h3 mb-1">Dashboard</h1>
+                <p class="text-body-secondary mb-0">Hello <span th:text="${customer.firstname}"></span>, here is your overview.</p>
+            </div>
+            <form method="get" class="d-flex align-items-center gap-2">
+                <label for="customerId" class="text-body-secondary small mb-0">Customer</label>
+                <select th:replace="~{fragments/customer :: picker}"></select>
+                <noscript><button class="btn btn-primary" type="submit">Show</button></noscript>
+            </form>
         </div>
-    </div>
+
+        <div class="row g-3 mb-4">
+            <div class="col-sm-6 col-xl-3">
+                <div class="card stat-card stat-primary h-100">
+                    <div class="card-body">
+                        <div class="stat-label">Current balance</div>
+                        <div class="stat-value" id="current-balance" th:text="${@money.format(balance)}"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm-6 col-xl-3">
+                <div class="card stat-card h-100">
+                    <div class="card-body">
+                        <div class="stat-label">Income · <span th:text="${thisMonth}"></span></div>
+                        <div class="stat-value amount-positive" th:text="${@money.format(summary.income)}"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm-6 col-xl-3">
+                <div class="card stat-card h-100">
+                    <div class="card-body">
+                        <div class="stat-label">Expenses · <span th:text="${thisMonth}"></span></div>
+                        <div class="stat-value amount-negative" th:text="${@money.format(summary.expenses)}"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm-6 col-xl-3">
+                <div class="card stat-card h-100">
+                    <div class="card-body">
+                        <div class="stat-label">Scheduled</div>
+                        <div class="stat-value" th:text="${scheduledCount}"></div>
+                        <div class="small text-body-secondary" th:if="${scheduledCount > 0}">
+                            future-dated, <span th:text="${@money.format(scheduledTotal)}"></span> in total
+                        </div>
+                        <div class="small text-body-secondary" th:if="${scheduledCount == 0}">no future-dated transactions</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header d-flex flex-wrap align-items-center justify-content-between gap-2">
+                <h2 class="h6 mb-0">Recent transactions</h2>
+                <div class="d-flex gap-2">
+                    <a class="btn btn-sm btn-outline-light" th:href="@{/balances(customerId=${customer.id})}">View all</a>
+                    <a class="btn btn-sm btn-primary" th:href="@{/transaction(customerId=${customer.id})}">Add transaction</a>
+                </div>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead>
+                        <tr>
+                            <th scope="col">Date</th>
+                            <th scope="col">Message</th>
+                            <th scope="col" class="text-end">Amount</th>
+                            <th scope="col" class="text-end">Balance after</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:if="${#lists.isEmpty(recent)}">
+                            <td colspan="4" class="text-body-secondary py-4 text-center">No transactions yet.</td>
+                        </tr>
+                        <tr th:each="row : ${recent}">
+                            <td th:text="${#temporals.format(row.date, 'dd.MM.yyyy')}"></td>
+                            <td th:text="${row.message}"></td>
+                            <td class="text-end amount"
+                                th:classappend="${row.amount.signum() >= 0 ? 'amount-positive' : 'amount-negative'}"
+                                th:text="${@money.format(row.amount)}"></td>
+                            <td class="text-end amount amount-balance" th:text="${@money.format(row.cumulativeBalance)}"></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
     <footer th:replace="~{fragments/footer :: footer}"></footer>
 </body>
 </html>
