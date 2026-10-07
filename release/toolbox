@@ -1,23 +1,13 @@
-#!/bin/bash
-# Helper for running the demo with Docker Compose
-set -e
+#!/bin/sh
+# Kept for backwards compatibility: use ../dev instead (./dev help in the project root)
+DEV="$(cd "$(dirname "$0")/.." && pwd)/dev"
 
 case "$1" in
-start)
-    echo "Starting the container..."
-    docker compose up --build
-    ;;
-build)
-    echo "Rebuilding the container from scratch..."
-    docker compose down
-    docker compose build --no-cache
-    docker compose up --force-recreate
-    ;;
-stop)
-    docker compose down
-    ;;
+start) exec "$DEV" up -f ;;
+build) exec "$DEV" rebuild ;;
+stop) exec "$DEV" down ;;
 *)
-    echo "Usage: sh toolbox start|build|stop"
+    echo "Usage: sh toolbox start|build|stop  (or use ./dev in the project root)"
     exit 1
     ;;
 esac
