@@ -5,6 +5,7 @@ services:
     name: jalabank
     runtime: docker
     plan: free
+    region: frankfurt
     dockerfilePath: ./release/Dockerfile
     dockerContext: ./release
     healthCheckPath: /actuator/health
