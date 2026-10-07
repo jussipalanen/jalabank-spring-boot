@@ -9,6 +9,9 @@ services:
     dockerfilePath: ./release/Dockerfile
     dockerContext: ./release
     healthCheckPath: /actuator/health
+    # Needs a CNAME record jalabank-demo -> jalabank.onrender.com at the DNS provider
+    domains:
+      - jalabank-demo.jussialanen.com
     buildFilter:
       paths:
         - release/**
