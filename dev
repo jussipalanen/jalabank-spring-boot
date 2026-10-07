@@ -1,0 +1,195 @@
+#!/usr/bin/env bash
+# Jalabank development helper: short commands for running the app with Docker.
+#
+# Usage: ./dev <command> [options]    (./dev help lists the commands)
+# Tip:   alias dev="$PWD/dev"         then just type: dev up, dev logs, ...
+set -euo pipefail
+
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+APP_DIR="$ROOT_DIR/release"
+SERVICE="app"
+PORT="${JALABANK_PORT:-8080}"
+URL="http://localhost:$PORT"
+export JALABANK_PORT="$PORT"
+
+if [ -t 1 ]; then
+    BOLD=$'\e[1m' GREEN=$'\e[32m' YELLOW=$'\e[33m' RED=$'\e[31m' RESET=$'\e[0m'
+else
+    BOLD="" GREEN="" YELLOW="" RED="" RESET=""
+fi
+
+info() { echo "${BOLD}${GREEN}==>${RESET} ${BOLD}$*${RESET}"; }
+warn() { echo "${YELLOW}$*${RESET}" >&2; }
+fail() { echo "${RED}Error: $*${RESET}" >&2; exit 1; }
+
+# Docker Compose v2 ("docker compose"), falling back to the old v1 binary
+compose() {
+    if docker compose version >/dev/null 2>&1; then
+        docker compose --project-directory "$APP_DIR" -f "$APP_DIR/docker-compose.yml" "$@"
+    elif command -v docker-compose >/dev/null 2>&1; then
+        docker-compose --project-directory "$APP_DIR" -f "$APP_DIR/docker-compose.yml" "$@"
+    else
+        fail "Docker Compose not found. Install Docker Desktop or the Compose plugin: https://docs.docker.com/compose/install/"
+    fi
+}
+
+require_docker() {
+    command -v docker >/dev/null 2>&1 || fail "Docker not found. Install it from https://docs.docker.com/get-docker/"
+    docker info >/dev/null 2>&1 || fail "Docker is not running. Start Docker Desktop (or the Docker service) and try again."
+}
+
+is_running() {
+    [ -n "$(compose ps --status running -q "$SERVICE" 2>/dev/null)" ]
+}
+
+# Wait until the health endpoint answers UP, for at most about 90 seconds
+wait_for_health() {
+    command -v curl >/dev/null 2>&1 || { warn "curl not found, not waiting for the app to start."; return 0; }
+    printf "Waiting for the app to start"
+    for _ in $(seq 1 45); do
+        if curl -fs "$URL/actuator/health" 2>/dev/null | grep -q '"UP"'; then
+            echo
+            info "Jalabank is running at $URL"
+            return 0
+        fi
+        printf "."
+        sleep 2
+    done
+    echo
+    warn "The app did not report healthy yet. Check the logs with: ./dev logs"
+    return 1
+}
+
+usage() {
+    cat <<EOF
+${BOLD}Jalabank dev helper${RESET}
+
+Usage: ./dev <command> [options]
+
+${BOLD}Run${RESET}
+  up, start          Build if needed and start in the background, then wait until healthy
+  up -f, fg          Start in the foreground with logs (Ctrl+C stops)
+  down, stop         Stop and remove the container
+  restart            Restart the running container (demo data resets)
+  rebuild            Rebuild the image from scratch (no cache) and start
+
+${BOLD}Inspect${RESET}
+  logs [-n]          Follow the logs (-n: print them once without following)
+  status, ps         Show the container status
+  health             Call the health endpoint
+  shell, sh          Open a shell inside the running container
+  open               Open the app in your browser
+
+${BOLD}Build and test${RESET}
+  build              Build the image only
+  test               Build and run the Maven tests inside Docker (no local Java needed)
+
+${BOLD}Clean up${RESET}
+  clean              Stop the app and remove the Jalabank images
+
+${BOLD}Environment${RESET}
+  JALABANK_PORT      Host port (default 8080), e.g. JALABANK_PORT=9090 ./dev up
+EOF
+}
+
+cmd="${1:-help}"
+[ $# -gt 0 ] && shift
+
+case "$cmd" in
+up | start)
+    require_docker
+    if [ "${1:-}" = "-f" ]; then
+        info "Starting Jalabank in the foreground on $URL (Ctrl+C stops)"
+        compose up --build
+    else
+        info "Starting Jalabank on $URL"
+        compose up --build -d
+        wait_for_health
+    fi
+    ;;
+fg)
+    exec "$0" up -f
+    ;;
+down | stop)
+    require_docker
+    info "Stopping Jalabank"
+    compose down
+    ;;
+restart)
+    require_docker
+    is_running || fail "Jalabank is not running. Start it with: ./dev up"
+    info "Restarting Jalabank (demo data resets)"
+    compose restart "$SERVICE"
+    wait_for_health
+    ;;
+rebuild)
+    require_docker
+    info "Rebuilding the image from scratch"
+    compose down
+    compose build --no-cache
+    compose up -d --force-recreate
+    wait_for_health
+    ;;
+logs)
+    require_docker
+    if [ "${1:-}" = "-n" ]; then
+        compose logs "$SERVICE"
+    else
+        compose logs -f "$SERVICE"
+    fi
+    ;;
+status | ps)
+    require_docker
+    compose ps
+    ;;
+health)
+    command -v curl >/dev/null 2>&1 || fail "curl not found"
+    curl -fsS "$URL/actuator/health" || fail "No answer from $URL. Is the app running? Try: ./dev status"
+    echo
+    ;;
+shell | sh)
+    require_docker
+    is_running || fail "Jalabank is not running. Start it with: ./dev up"
+    compose exec "$SERVICE" sh -c 'if command -v bash >/dev/null; then exec bash; else exec sh; fi'
+    ;;
+open)
+    info "Opening $URL"
+    if command -v xdg-open >/dev/null 2>&1; then
+        xdg-open "$URL" >/dev/null 2>&1
+    elif command -v open >/dev/null 2>&1; then
+        open "$URL"
+    elif command -v cmd.exe >/dev/null 2>&1; then
+        cmd.exe /c start "$URL" >/dev/null 2>&1
+    else
+        echo "Open $URL in your browser."
+    fi
+    ;;
+build)
+    require_docker
+    info "Building the image"
+    compose build
+    ;;
+test)
+    require_docker
+    # The Dockerfile's build stage runs "mvn package", which runs the tests.
+    # Docker reuses the cached result when the sources have not changed.
+    info "Running the tests inside Docker"
+    docker build --target build --progress plain -t jalabank-build "$APP_DIR"
+    info "Tests passed"
+    ;;
+clean)
+    require_docker
+    info "Removing the container and the Jalabank images"
+    compose down --rmi all --remove-orphans
+    docker image rm -f jalabank-build >/dev/null 2>&1 || true
+    ;;
+help | -h | --help)
+    usage
+    ;;
+*)
+    echo "${RED}Unknown command: $cmd${RESET}" >&2
+    echo >&2
+    usage >&2
+    exit 1
+    ;;
+esac
