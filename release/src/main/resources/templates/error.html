@@ -1,20 +1,20 @@
 <!DOCTYPE html>
-<!-- To use thymeleaf -->
-<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<html xmlns:th="http://www.thymeleaf.org" lang="en" data-bs-theme="dark">
 
-<head th:replace="~{fragments/header :: head}"></head>
+<head th:replace="~{fragments/header :: head('Error')}"></head>
 
 <body>
-    <div th:replace="~{fragments/navigation :: navigation}"></div>
-    <div class="container">
-        <div class="row mt-3">
-            <div class="col">
-                <h2 th:text="|Error ${status}|">Error</h2>
-                <p th:text="${error}"></p>
-                <a th:replace="~{fragments/back :: back}"></a>
+    <nav th:replace="~{fragments/navigation :: navigation('')}"></nav>
+    <main class="container py-5">
+        <div class="card mx-auto" style="max-width: 32rem">
+            <div class="card-body p-4 text-center">
+                <h1 class="h3" th:text="|Error ${status}|">Error</h1>
+                <p class="text-body-secondary" th:text="${error}"></p>
+                <a th:href="@{/}" class="btn btn-primary">Back to dashboard</a>
             </div>
         </div>
-    </div>
+    </main>
+    <footer th:replace="~{fragments/footer :: footer}"></footer>
 </body>
 
 </html>

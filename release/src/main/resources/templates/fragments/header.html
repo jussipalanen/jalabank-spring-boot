@@ -1,9 +1,12 @@
 <!-- HEAD START -->
-<head th:fragment="head">
+<head th:fragment="head(title)">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Jalabank Application - Demo</title>
+    <meta name="color-scheme" content="dark">
+    <title th:text="${title} + ' · Jalabank'">Jalabank</title>
     <link th:href="@{/webjars/bootstrap/css/bootstrap.min.css}" rel="stylesheet">
+    <link th:href="@{/css/app.css}" rel="stylesheet">
     <script th:src="@{/webjars/bootstrap/js/bootstrap.bundle.min.js}" defer></script>
+    <script th:src="@{/js/app.js}" defer></script>
 </head>
 <!-- HEAD END -->
