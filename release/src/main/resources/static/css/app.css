@@ -1,0 +1,210 @@
+/* Jalabank dark blue theme, on top of Bootstrap's dark color mode */
+:root,
+[data-bs-theme="dark"] {
+    --jb-navy-950: #071226;
+    --jb-navy-900: #0a1730;
+    --jb-navy-850: #0d1d3b;
+    --jb-navy-800: #112548;
+    --jb-navy-700: #1a3463;
+    --jb-blue-500: #3b82f6;
+    --jb-blue-400: #60a5fa;
+    --jb-green: #34d399;
+    --jb-red: #f87171;
+    --jb-amber: #fbbf24;
+
+    --bs-body-bg: var(--jb-navy-950);
+    --bs-body-color: #dbe5f5;
+    --bs-emphasis-color: #f2f6ff;
+    --bs-secondary-color: #8ea3c7;
+    --bs-secondary-bg: var(--jb-navy-850);
+    --bs-tertiary-bg: var(--jb-navy-900);
+    --bs-border-color: var(--jb-navy-700);
+    --bs-border-color-translucent: rgba(96, 165, 250, 0.18);
+    --bs-link-color: var(--jb-blue-400);
+    --bs-link-color-rgb: 96, 165, 250;
+    --bs-link-hover-color: #93c5fd;
+    --bs-link-hover-color-rgb: 147, 197, 253;
+    --bs-primary: var(--jb-blue-500);
+    --bs-primary-rgb: 59, 130, 246;
+    --bs-success-rgb: 52, 211, 153;
+    --bs-danger-rgb: 248, 113, 113;
+    --bs-focus-ring-color: rgba(59, 130, 246, 0.35);
+}
+
+body {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    background:
+        radial-gradient(1200px 500px at 10% -10%, rgba(37, 99, 235, 0.18), transparent 60%),
+        radial-gradient(900px 400px at 100% 0%, rgba(14, 165, 233, 0.10), transparent 60%),
+        var(--jb-navy-950);
+}
+
+main {
+    flex: 1;
+}
+
+/* Navbar */
+.jb-navbar {
+    background: linear-gradient(90deg, #0b1f45, #12306a);
+    border-bottom: 1px solid var(--bs-border-color-translucent);
+}
+
+.jb-navbar .navbar-brand {
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.jb-logo {
+    width: 1.9rem;
+    height: 1.9rem;
+    border-radius: 0.55rem;
+    display: inline-grid;
+    place-items: center;
+    background: linear-gradient(135deg, var(--jb-blue-500), #22d3ee);
+    color: #04122b;
+    font-weight: 800;
+}
+
+.jb-navbar .nav-link {
+    border-radius: 0.5rem;
+    padding-inline: 0.8rem !important;
+}
+
+.jb-navbar .nav-link.active {
+    background: rgba(59, 130, 246, 0.22);
+    color: #fff;
+}
+
+/* Cards */
+.card {
+    --bs-card-bg: rgba(13, 29, 59, 0.85);
+    --bs-card-border-color: var(--bs-border-color);
+    --bs-card-cap-bg: rgba(17, 37, 72, 0.9);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+}
+
+.stat-card .stat-label {
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--bs-secondary-color);
+}
+
+.stat-card .stat-value {
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: var(--bs-emphasis-color);
+    font-variant-numeric: tabular-nums;
+}
+
+.stat-card.stat-primary {
+    background: linear-gradient(135deg, #1d4ed8, #0e7490);
+    border-color: transparent;
+}
+
+.stat-card.stat-primary .stat-label {
+    color: rgba(255, 255, 255, 0.75);
+}
+
+/* Amounts */
+.amount {
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
+.amount-positive {
+    color: var(--jb-green);
+}
+
+.amount-negative {
+    color: var(--jb-red);
+}
+
+.amount-balance {
+    color: var(--jb-blue-400);
+}
+
+/* Tables */
+.table {
+    --bs-table-bg: transparent;
+    --bs-table-color: var(--bs-body-color);
+    --bs-table-border-color: var(--bs-border-color);
+    --bs-table-hover-bg: rgba(59, 130, 246, 0.08);
+    --bs-table-hover-color: var(--bs-emphasis-color);
+    margin-bottom: 0;
+}
+
+.table thead th {
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--bs-secondary-color);
+    font-weight: 600;
+}
+
+.table .tx-id {
+    font-family: var(--bs-font-monospace);
+    font-size: 0.78rem;
+    color: var(--bs-secondary-color);
+}
+
+tr.selected {
+    --bs-table-bg: rgba(59, 130, 246, 0.14);
+}
+
+/* Forms and buttons */
+.form-control,
+.form-select {
+    background-color: var(--jb-navy-900);
+    border-color: var(--bs-border-color);
+}
+
+.form-check-input {
+    background-color: var(--jb-navy-900);
+    border-color: #2b4c86;
+}
+
+.btn-primary {
+    --bs-btn-bg: #2563eb;
+    --bs-btn-border-color: #2563eb;
+    --bs-btn-hover-bg: #1d4ed8;
+    --bs-btn-hover-border-color: #1d4ed8;
+    --bs-btn-active-bg: #1e40af;
+}
+
+.btn-icon {
+    --bs-btn-padding-x: 0.45rem;
+    --bs-btn-padding-y: 0.2rem;
+    line-height: 1;
+}
+
+/* Pagination */
+.pagination {
+    --bs-pagination-bg: var(--jb-navy-900);
+    --bs-pagination-border-color: var(--bs-border-color);
+    --bs-pagination-color: var(--bs-body-color);
+    --bs-pagination-hover-bg: var(--jb-navy-800);
+    --bs-pagination-hover-border-color: var(--bs-border-color);
+    --bs-pagination-hover-color: #fff;
+    --bs-pagination-active-bg: #2563eb;
+    --bs-pagination-active-border-color: #2563eb;
+    --bs-pagination-disabled-bg: var(--jb-navy-950);
+    --bs-pagination-disabled-border-color: var(--bs-border-color);
+    --bs-pagination-disabled-color: #4b6390;
+    margin-bottom: 0;
+}
+
+.jb-footer {
+    border-top: 1px solid var(--bs-border-color-translucent);
+    color: var(--bs-secondary-color);
+}
+
+/* Keeps absolutely positioned helpers (such as .visually-hidden headers) inside the scroll area on phones */
+.table-responsive {
+    position: relative;
+}

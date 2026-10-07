@@ -1,23 +1,23 @@
-<nav th:fragment="navigation" class="navbar navbar-expand-lg bg-body-tertiary">
-    <div class="container-fluid">
-        <a class="navbar-brand" th:href="@{/}">Jalabank</a>
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent"
-            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+<nav th:fragment="navigation(active)" class="navbar navbar-expand-lg jb-navbar sticky-top" data-bs-theme="dark">
+    <div class="container">
+        <a class="navbar-brand" th:href="@{/}"><span class="jb-logo">J</span> Jalabank</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav"
+            aria-controls="mainNav" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>
         </button>
-        <div class="collapse navbar-collapse" id="navbarSupportedContent">
-            <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+        <div class="collapse navbar-collapse" id="mainNav">
+            <ul class="navbar-nav ms-auto mb-2 mb-lg-0 gap-lg-1">
                 <li class="nav-item">
-                    <a class="nav-link" th:href="@{/}">Home</a>
+                    <a class="nav-link" th:classappend="${active == 'home'} ? active" th:href="@{/}">Dashboard</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" th:href="@{/transaction}">Add transaction</a>
+                    <a class="nav-link" th:classappend="${active == 'balances'} ? active" th:href="@{/balances}">Balances</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" th:href="@{/balances}">Balances</a>
+                    <a class="nav-link" th:classappend="${active == 'transaction'} ? active" th:href="@{/transaction}">Add transaction</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" th:href="@{/apidocs}">API docs</a>
+                    <a class="nav-link" th:href="@{/docs}">API docs</a>
                 </li>
             </ul>
         </div>
