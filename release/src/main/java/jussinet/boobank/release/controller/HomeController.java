@@ -1,22 +1,14 @@
 package jussinet.boobank.release.controller;
 
-import java.text.DateFormatSymbols;
-import java.text.NumberFormat;
 import java.time.LocalDate;
+import java.time.Month;
 import java.time.YearMonth;
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Currency;
-import java.util.Date;
-import java.util.HashMap;
+import java.time.format.TextStyle;
+import java.util.Arrays;
 import java.util.List;
-import java.util.stream.Collectors;
+import java.util.Locale;
 import java.util.stream.IntStream;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -27,202 +19,115 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import jakarta.validation.Valid;
-import jussinet.boobank.release.entity.Customer;
-import jussinet.boobank.release.entity.Transaction;
+import jussinet.boobank.release.model.PageResult;
+import jussinet.boobank.release.model.StatementRow;
 import jussinet.boobank.release.repository.CustomerRepository;
-import jussinet.boobank.release.repository.TransactionRepository;
-import jussinet.boobank.release.repository.queryinterfaces.TransactionData;
-
-@Controller
+import jussinet.boobank.release.service.TransactionService;
+import jussinet.boobank.release.web.TransactionForm;
 
 /**
- * Main controller (for the backend web pages)
+ * Main controller (for the web pages)
  */
+@Controller
 public class HomeController {
 
-    @Autowired
-    private CustomerRepository customerRepository;
-    @Autowired
-    private TransactionRepository transactionRepository;
+    static final List<Integer> PAGE_SIZES = List.of(5, 10, 25, 50, 100, 500, 1000);
 
-    HomeController(CustomerRepository customerRepository, TransactionRepository transactionRepository) {
-        this.customerRepository = customerRepository;
-        this.transactionRepository = transactionRepository;
+    /** A month option in the balances filter */
+    public record MonthOption(int number, String name) {
     }
 
+    private final CustomerRepository customerRepository;
+    private final TransactionService transactionService;
+
+    HomeController(CustomerRepository customerRepository, TransactionService transactionService) {
+        this.customerRepository = customerRepository;
+        this.transactionService = transactionService;
+    }
 
     /**
      * Home page
-     * @param model
-     * @return
      */
     @GetMapping("/")
     public String index(Model model) {
-        Currency currency = Currency.getInstance("EUR");
-
-        // get the cumulative sum
-        Float sum = customerRepository.findCumulativeBalance() != null ? customerRepository.findCumulativeBalance() : 0;
-        NumberFormat format = NumberFormat.getCurrencyInstance();
-        format.setCurrency(currency);
-        String str = format.format(sum);
-        model.addAttribute("cumulativeSum", str);
-
+        model.addAttribute("balance", transactionService.currentBalance());
         return "index";
     }
 
     /**
-     * Get transaction form page
-     * @param model
-     * @return
+     * Transaction form page
      */
-    @GetMapping(value = "/transaction")
+    @GetMapping("/transaction")
     public String getTransaction(Model model) {
-
-        Transaction transaction = new Transaction();
-        transaction.setDate(new Date());
-        model.addAttribute("transaction", transaction);
-        model.addAttribute("defaultMethod", "deposit");
-
-        // adding the customers
-        List<Customer> customers = customerRepository.findAll();
-        model.addAttribute("customers", customers);
+        TransactionForm form = new TransactionForm();
+        customerRepository.findAll().stream().findFirst().ifPresent(c -> form.setCustomerId(c.id()));
+        model.addAttribute("transaction", form);
+        model.addAttribute("customers", customerRepository.findAll());
         return "transaction";
     }
 
     /**
-     * Show API docs page
-     * @param model
-     * @return
+     * Save a new transaction
      */
-    @GetMapping(value = "/apidocs")
-    public String getApiDocs(Model model) {
+    @PostMapping("/transaction")
+    public String postTransaction(Model model, @ModelAttribute("transaction") @Valid TransactionForm form,
+            BindingResult result) {
 
+        if (form.getCustomerId() != null && customerRepository.findById(form.getCustomerId()).isEmpty()) {
+            result.rejectValue("customerId", "unknown", "Unknown customer");
+        }
+        if (!result.hasErrors()) {
+            try {
+                transactionService.addTransaction(form.getCustomerId(), form.getDate(), form.signedAmount(),
+                        form.getMessage());
+                return "redirect:/";
+            } catch (IllegalStateException e) {
+                result.reject("full", e.getMessage());
+            }
+        }
+        model.addAttribute("customers", customerRepository.findAll());
+        return "transaction";
+    }
+
+    /**
+     * API docs page
+     */
+    @GetMapping("/apidocs")
+    public String getApiDocs(Model model) {
         String baseApiUrl = ServletUriComponentsBuilder.fromCurrentContextPath().build().toUriString() + "/api/v1";
         model.addAttribute("baseApiUrl", baseApiUrl);
         return "apidocs";
     }
 
     /**
-     * Post data of transaction
-     * @param model
-     * @param transaction
-     * @param result
-     * @return
-     */
-    @PostMapping(value = "/transaction")
-    public String postTransaction(Model model, @ModelAttribute("transaction") @Valid Transaction transaction,
-            BindingResult result) {
-
-        // adding the customers
-        List<Customer> customers = customerRepository.findAll();
-        model.addAttribute("customers", customers);
-
-        if (result.hasErrors()) {
-            return "transaction";
-        }
-
-        Float amount = transaction.getAmount();
-        String transferMethod = transaction.getTransferMethod();
-        if (transferMethod.equals("withdraw")) {
-            amount = -amount;
-        } else {
-            amount = Math.abs(amount);
-        }
-        transaction.setAmount(amount);
-        transactionRepository.save(transaction);
-        return "redirect:/";
-    }
-
-    /**
-     * Get the monthly balances, and this shows cumulative balances too
-     * @param model
-     * @param month
-     * @param year
-     * @param page
-     * @param size
-     * @return
+     * The transactions of one month with cumulative balances, and the balance at the end of the month
+     *
+     * @param page one-based page number
      */
     @GetMapping("/balances")
     public String balances(Model model, @RequestParam(required = false) Integer month,
-            @RequestParam(required = false) Integer year, @RequestParam(required = false) Integer page, @RequestParam(required = false) Integer size) {
-                
-        Date date = new Date();
-        Calendar cal = Calendar.getInstance();
-        cal.setTime(date);
+            @RequestParam(required = false) Integer year, @RequestParam(required = false) Integer page,
+            @RequestParam(required = false) Integer size) {
 
-        if (month == null) {
-            // Default month, if null
-            month = cal.get(Calendar.MONTH) + 1;
-        }
+        LocalDate today = LocalDate.now();
+        int selectedMonth = month != null && month >= 1 && month <= 12 ? month : today.getMonthValue();
+        int selectedYear = year != null && year >= 1 && year <= 9999 ? year : today.getYear();
+        int pageSize = size != null && PAGE_SIZES.contains(size) ? size : 10;
+        int pageIndex = page != null && page > 0 ? page - 1 : 0;
 
-        if (year == null) {
-            // Default yhear, if null
-            year = cal.get(Calendar.YEAR);
-        }
+        YearMonth yearMonth = YearMonth.of(selectedYear, selectedMonth);
+        PageResult<StatementRow> transactions = transactionService.statement(yearMonth, pageIndex, pageSize);
 
-        // get first day and last day by month and year
-        String startDateStr = YearMonth.of(year, month).atDay(1).toString();
-        String endDateStr = YearMonth.of(year, month).atEndOfMonth().toString();
-        size = size != null && size > 0 ? size : 10;
-
-        Pageable pageable = PageRequest.of((page != null && page > 0 ? (page - 1) : 0), size);
-       
-        Page<TransactionData> transactions = transactionRepository.findAllPaged(startDateStr, endDateStr, pageable);
-        Float monthlyBalance = customerRepository.findMonthlyBalance(startDateStr, endDateStr);
-        monthlyBalance = monthlyBalance != null ? monthlyBalance : 0;
-
-        Currency currency = Currency.getInstance("EUR");
-        NumberFormat format = NumberFormat.getCurrencyInstance();
-        format.setCurrency(currency);
-        String monthBalanceStr = format.format(monthlyBalance);
-
-        Float cumulativeSum = customerRepository.findCumulativeBalance() != null ? customerRepository.findCumulativeBalance() : 0;
-        format.setCurrency(currency);
-        String cumulativeSumStr = format.format(cumulativeSum);
-        model.addAttribute("cumulativeSum", cumulativeSumStr);
-
-        // Years
-        LocalDate d = LocalDate.now();
-        List<Integer> yearsList = new ArrayList<>();
-        Integer currentYear = d.getYear();
-        yearsList.add(currentYear);
-        for (int i = 0; i <= 10; i++) {
-            d = d.minusYears(1);
-            yearsList.add(d.getYear());
-        }
-
-        // Months
-        List<Object> monthsList = new ArrayList<Object>();
-        String[] months = new DateFormatSymbols().getMonths();
-        for (int i = 0; i < (months.length - 1); i++) {
-            Integer monthNumber = (i + 1);
-            HashMap<String, Object> monthObject = new HashMap<String, Object>();
-            monthObject.put("number", monthNumber);
-            monthObject.put("name", months[i]);
-            monthsList.add(monthObject);
-        }
-
-        // list of transactions
         model.addAttribute("transactions", transactions);
-
-        // month balance
-        model.addAttribute("monthBalance", monthBalanceStr);
-
-        // list of years and months
-        model.addAttribute("years", yearsList);
-        model.addAttribute("months", monthsList);
-
-        // current month and year
-        model.addAttribute("month", month);
-        model.addAttribute("year", year);
-
-        // pagination
-        Integer totalPages = transactions.getTotalPages();
-        if (totalPages > 0) {
-            List<Integer> pageNumbers = IntStream.rangeClosed(1, totalPages).boxed().collect(Collectors.toList());
-            model.addAttribute("pageNumbers", pageNumbers);
-        }
-        model.addAttribute("size", size);
+        model.addAttribute("monthBalance", transactionService.balanceAtEndOf(yearMonth));
+        model.addAttribute("years", IntStream.rangeClosed(0, 10).map(i -> today.getYear() - i).boxed().toList());
+        model.addAttribute("months", Arrays.stream(Month.values())
+                .map(m -> new MonthOption(m.getValue(), m.getDisplayName(TextStyle.FULL, Locale.ENGLISH)))
+                .toList());
+        model.addAttribute("pageSizes", PAGE_SIZES);
+        model.addAttribute("month", selectedMonth);
+        model.addAttribute("year", selectedYear);
+        model.addAttribute("size", pageSize);
         return "balances";
     }
 }

@@ -1,18 +1,17 @@
 package jussinet.boobank.release.controller;
 
 import java.util.List;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
-import org.springframework.data.domain.Sort.Direction;
+
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ResponseStatusException;
 
-import jussinet.boobank.release.repository.TransactionRepository;
-import jussinet.boobank.release.repository.queryinterfaces.TransactionApiData;
+import jussinet.boobank.release.model.SortDirection;
+import jussinet.boobank.release.model.TransactionApiData;
+import jussinet.boobank.release.service.TransactionService;
 
 /**
  * Transaction API
@@ -21,47 +20,38 @@ import jussinet.boobank.release.repository.queryinterfaces.TransactionApiData;
 @RequestMapping("/api/v1")
 public class TransactionController {
 
-    @Autowired
-    private TransactionRepository repository;
+    private final TransactionService transactionService;
 
-    TransactionController(TransactionRepository transactionRepository) {
-        this.repository = transactionRepository;
+    TransactionController(TransactionService transactionService) {
+        this.transactionService = transactionService;
     }
 
     /**
-     * Get all of the transactions
-     * The request parameters are optional: month, year, and customer_id
-     * 
-     * @return
+     * Get the transactions. All request parameters are optional; without {@code size} every transaction is returned.
+     *
+     * @param page one-based page number
      */
-    @GetMapping(value = "/transactions")
+    @GetMapping("/transactions")
     List<TransactionApiData> all(@RequestParam(required = false) Integer page,
             @RequestParam(required = false) Integer size,
-            @RequestParam(required = false, defaultValue = "date") String sortBy,
-            @RequestParam(required = false, defaultValue = "DESC") Direction sortDirection) {
+            @RequestParam(defaultValue = "date") String sortBy,
+            @RequestParam(defaultValue = "DESC") String sortDirection) {
 
-        if (sortDirection.equals(Sort.Direction.DESC)) {
-            sortDirection = Sort.Direction.DESC;
-        } else {
-            sortDirection = Sort.Direction.ASC;
+        int pageIndex = page != null && page > 0 ? page - 1 : 0;
+        int pageSize = size != null && size > 0 ? size : Math.max(transactionService.count(), 1);
+        try {
+            SortDirection direction = SortDirection.parse(sortDirection);
+            return transactionService.apiTransactions(pageIndex, pageSize, sortBy, direction).content();
+        } catch (IllegalArgumentException e) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
         }
-
-        Sort sort = Sort.by(sortDirection, sortBy);
-        Pageable pageable = PageRequest.of((page != null && page > 0 ? (page - 1) : 0),
-                (size != null && size > 0 ? size : Integer.MAX_VALUE), sort);
-        return repository.findAllTransactions(pageable);
     }
 
     /**
-     * Check total count of the transactions
-     * 
-     * @param json
-     * @return
+     * Get the total count of the transactions
      */
-    @GetMapping(value = "/transactions/count")
-    Integer count() {
-        Pageable pageable = PageRequest.of(0, Integer.MAX_VALUE);
-        return repository.findAllTransactions(pageable).size();
+    @GetMapping("/transactions/count")
+    int count() {
+        return transactionService.count();
     }
-
 }

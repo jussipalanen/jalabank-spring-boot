@@ -1,16 +1,15 @@
 package jussinet.boobank.release.controller;
 
 import java.util.List;
-import java.util.Optional;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ResponseStatusException;
 
-import jussinet.boobank.release.entity.Customer;
+import jussinet.boobank.release.model.Customer;
 import jussinet.boobank.release.repository.CustomerRepository;
 
 /*
@@ -20,45 +19,26 @@ import jussinet.boobank.release.repository.CustomerRepository;
 @RequestMapping("/api/v1")
 public class CustomerController {
 
-
-    @Autowired
-    private CustomerRepository repository;
+    private final CustomerRepository customerRepository;
 
     CustomerController(CustomerRepository customerRepository) {
-        this.repository = customerRepository;
+        this.customerRepository = customerRepository;
     }
 
     /**
      * Get all of the customers
-     * 
-     * @return
      */
-    @GetMapping(value = "/customers")
+    @GetMapping("/customers")
     List<Customer> all() {
-        return repository.findAll();
+        return customerRepository.findAll();
     }
 
     /**
      * Get a single customer by id
-     * 
-     * @param id
-     * @return
      */
-    @GetMapping(value = "/customers/{id}")
-    public Optional<Customer> get(@PathVariable int id) {
-        return repository.findById(id);
-    }
-
-
-    /**
-     * Create a new customer
-     * @param customer
-     * @return
-     */
-    @PostMapping(value = "/customers/save")
-    public Customer post(Customer customer)
-    {
-        repository.save(customer);
-        return customer;
+    @GetMapping("/customers/{id}")
+    Customer get(@PathVariable long id) {
+        return customerRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Customer not found"));
     }
 }
