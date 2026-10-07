@@ -1,4 +1,4 @@
-package jussinet.boobank.release.repository;
+package jussinet.jalabank.release.repository;
 
 import java.util.List;
 import java.util.Map;
@@ -7,7 +7,7 @@ import java.util.concurrent.ConcurrentSkipListMap;
 
 import org.springframework.stereotype.Repository;
 
-import jussinet.boobank.release.model.Customer;
+import jussinet.jalabank.release.model.Customer;
 
 /**
  * In-memory customer store. Contents live only as long as the application runs.

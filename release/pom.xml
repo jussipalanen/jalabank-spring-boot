@@ -9,11 +9,11 @@
 		<version>4.1.1</version>
 		<relativePath /> <!-- lookup parent from repository -->
 	</parent>
-	<groupId>jussinet.boobank</groupId>
-	<artifactId>boobank</artifactId>
+	<groupId>jussinet.jalabank</groupId>
+	<artifactId>jalabank</artifactId>
 	<version>2.0.0</version>
-	<name>boobank</name>
-	<description>Boobank demo application (Spring Boot, in-memory demo data)</description>
+	<name>jalabank</name>
+	<description>Jalabank demo application (Spring Boot, in-memory demo data)</description>
 	<properties>
 		<java.version>21</java.version>
 	</properties>
@@ -53,7 +53,7 @@
 		</dependency>
 	</dependencies>
 	<build>
-		<finalName>boobank</finalName>
+		<finalName>jalabank</finalName>
 		<plugins>
 			<plugin>
 				<groupId>org.springframework.boot</groupId>

@@ -1,4 +1,4 @@
-package jussinet.boobank.release.controller;
+package jussinet.jalabank.release.controller;
 
 import java.time.LocalDate;
 import java.time.Month;
@@ -19,11 +19,11 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import jakarta.validation.Valid;
-import jussinet.boobank.release.model.PageResult;
-import jussinet.boobank.release.model.StatementRow;
-import jussinet.boobank.release.repository.CustomerRepository;
-import jussinet.boobank.release.service.TransactionService;
-import jussinet.boobank.release.web.TransactionForm;
+import jussinet.jalabank.release.model.PageResult;
+import jussinet.jalabank.release.model.StatementRow;
+import jussinet.jalabank.release.repository.CustomerRepository;
+import jussinet.jalabank.release.service.TransactionService;
+import jussinet.jalabank.release.web.TransactionForm;
 
 /**
  * Main controller (for the web pages)

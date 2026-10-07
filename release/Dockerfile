@@ -10,10 +10,10 @@ RUN mvn -B package
 
 # Run
 FROM eclipse-temurin:21-jre
-RUN useradd --system --uid 10001 boobank
-COPY --from=build /home/app/target/boobank.jar /usr/local/lib/boobank.jar
-USER boobank
+RUN useradd --system --uid 10001 jalabank
+COPY --from=build /home/app/target/jalabank.jar /usr/local/lib/jalabank.jar
+USER jalabank
 ENV PORT=8080
 EXPOSE 8080
 # Keep the heap within the container's memory limit (e.g. 512 MB on small hosting plans)
-ENTRYPOINT ["java", "-XX:MaxRAMPercentage=75", "-jar", "/usr/local/lib/boobank.jar"]
+ENTRYPOINT ["java", "-XX:MaxRAMPercentage=75", "-jar", "/usr/local/lib/jalabank.jar"]

@@ -1,4 +1,4 @@
-package jussinet.boobank.release.service;
+package jussinet.jalabank.release.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -10,11 +10,11 @@ import java.time.YearMonth;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import jussinet.boobank.release.model.PageResult;
-import jussinet.boobank.release.model.SortDirection;
-import jussinet.boobank.release.model.StatementRow;
-import jussinet.boobank.release.model.TransactionApiData;
-import jussinet.boobank.release.repository.TransactionRepository;
+import jussinet.jalabank.release.model.PageResult;
+import jussinet.jalabank.release.model.SortDirection;
+import jussinet.jalabank.release.model.StatementRow;
+import jussinet.jalabank.release.model.TransactionApiData;
+import jussinet.jalabank.release.repository.TransactionRepository;
 
 class TransactionServiceTest {
 

@@ -1,4 +1,4 @@
-package jussinet.boobank.release.repository;
+package jussinet.jalabank.release.repository;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -6,7 +6,7 @@ import java.util.List;
 
 import org.springframework.stereotype.Repository;
 
-import jussinet.boobank.release.model.Transaction;
+import jussinet.jalabank.release.model.Transaction;
 
 /**
  * In-memory transaction store. Contents live only as long as the application runs.

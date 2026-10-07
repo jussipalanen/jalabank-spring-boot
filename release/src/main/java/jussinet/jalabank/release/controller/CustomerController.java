@@ -1,4 +1,4 @@
-package jussinet.boobank.release.controller;
+package jussinet.jalabank.release.controller;
 
 import java.util.List;
 
@@ -9,8 +9,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
-import jussinet.boobank.release.model.Customer;
-import jussinet.boobank.release.repository.CustomerRepository;
+import jussinet.jalabank.release.model.Customer;
+import jussinet.jalabank.release.repository.CustomerRepository;
 
 /*
  * Customer API
