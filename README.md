@@ -1,242 +1,263 @@
-# Boobank Demo Application
-This is the test bank application by Java Spring Boot Framework. This application provides adding new transactions, viewing the monthly and cumulative balances, and using the API transaction list call.
+# Jalabank Demo Application
 
-# How to install and use an application
+A small demo bank built with **Java 21** and **Spring Boot 4**. Add deposits and withdrawals, browse the transactions of a month with the cumulative balance after each one, and read the transactions through a REST API.
 
-## Requirements
-- Java 17 (openjdk 17.0.7)
-- Apache Maven 3.6.3
-- PostgreSQL 14.8
+The app needs **no database**. It starts with about six months of realistic demo data (salary, rent, groceries, card payments) kept in memory, so it runs anywhere with one command. Everything you add resets when the app restarts.
 
-## Installation
+**[Overview](#overview)** · **[Run locally](#run-locally)** · **[Docker](#docker)** · **[Host on Render](#host-on-render)** · **[REST API](#rest-api)** · **[Project structure](#project-structure)** · **[Screenshots](#screenshots)**
 
-We list the methods, and how to use the Java Spring Application.
+---
 
-### Docker (recommended)
-- Install the Docker desktop on your computer: https://docs.docker.com/engine/install/
-- Complete the Docker installation (if you are using the WSL, remember to check WSL integration option)
-    - If you are new on WSL, please read this: `https://learn.microsoft.com/en-us/windows/wsl/install`
-- Git clone the repository 
-    - `git clone https://github.com/jussipalanen/bonkbank-java-spring.git`
-    - or `git clone https://github.com/jussipalanen/boobank-java-spring.git` 
-        - in your workspace e.g `/home/user/projects/boobank` or `C:/projects/boobank`
-- Go to the directory and run the main shell-script (.sh) file `sh toolbox build` in your workspace directory `/home/user/projects/boobank/release` or otherwise e.g.
-`docker build -t boobank-demo` and then `docker compose up`
-- The compose file installs containers and required libraries, and initializes the database for JPA entities. You do not need to create a new database, because the compose file creates itself.
-- If the build was built successfully, try to go browser and type into the address bar: 
-    - http://localhost:8080/ (Web UI)
-    - http://localhost:5000/ (Adminer)
+## Overview
 
-### WSL (Windows Subsystem for Linux)
-- Install Java, Maven, and PostgreSQL on your local server (see the requirements section)
-- In PostgreSQL installation, remember the username and password, and what are you using. 
-- You can create the new database in PostgreSQL and give a name: `boobank`. The username and password are required in database configuration in the file `application.properties`. 
-    - Attention! If you want, you can import the SQL dump file into the database. It can be found in `sqldumps` directory.
-- Fill the `spring.datasource.username` and `spring.datasource.password`. Check the `spring.datasource.url`, if it's a valid host. It can be `jdbc:postgresql://127.0.0.1:5432/boobank` or `jdbc:postgresql://localhost:5432/boobank`
+| Page | What it does |
+|---|---|
+| **Home** | Shows the customer's current balance. |
+| **Add transaction** | Form for a deposit or withdrawal, with a date, customer and message. Amounts are validated (0.01 to 9 999 999, two decimals at most). |
+| **Balances** | Transactions of the chosen month and year, with the cumulative balance after each one, the balance at the end of the month, and pagination. |
+| **API docs** | The REST API endpoints with live example links. |
 
-## Usage
-You can see the links on the top navbar: "Home", "Add transaction", "Balances", and "API docs"....
-### Home
-Nothing special. You can see only the current balance of the test customer. "Demo effect."
+**Tech stack:** Java 21 · Spring Boot 4.1 (Web MVC, Thymeleaf, Validation, Actuator) · Bootstrap 5.3 (bundled, no CDN) · JUnit 5 + AssertJ · Docker.
 
-### Add Transaction
-This is a basic form. You can give input of amount, message, date, and customer. Fill in all of the fields, and try to submit a transaction. 
+<details>
+<summary><b>How the demo data works</b></summary>
 
-### Balances (transactions)
-This is a view of the balances (transactions). The table contains the ID (UUID), amount, message, and cumulative balance of transactions and shows the monthly balances too. The pagination, year, and month filters have been implemented in this section.
+- `DemoDataSeeder` creates two customers (John Doe and Jane Doe) and generates transactions from the start of the month six months ago up to today, so the current month always has data.
+- The generator uses a fixed random seed, so the amounts are the same on every start.
+- Data lives in in-memory repositories (`CustomerRepository`, `TransactionRepository`). There is no database, and nothing is written to disk.
+- To keep a public demo from growing without limit, the app accepts at most 10 000 transactions. Restart it to reset.
 
+</details>
 
-### API
+<details>
+<summary><b>How the balances are calculated</b></summary>
 
-#### Transactions
+All amounts are `BigDecimal`, so there are no floating-point rounding errors. `TransactionService` does the calculations:
 
-You can find all of the transaction API calls from the file `TransactionController.java`
+- **Current balance:** the sum of all transactions.
+- **Cumulative balance:** a running total over all transactions in date order. Transactions on the same date keep the order they were added in.
+- **Month balance:** the cumulative balance after the last transaction on or before the last day of the month.
 
-##### List all of the transactions
-- URL: `http://localhost:8080/api/v1/transactions`
-- Optional query GET parameters:
-    - page=1
-    - size=10
-    - sortDirection=ASC|DESC
-    - sortBy=id|amount|date
-- Example: `http://localhost:8080/api/v1/transactions?page=1&size=100&sortBy=date&sortDirection=DESC`
+</details>
 
-##### Count of the transactions
-- URL: `http://localhost:8080/api/v1/transactions/count`
+---
 
-https://www.postman.com/downloads/
+## Run locally
 
+**Requirements:** Java 21 or newer. Maven is optional, because the project includes the Maven wrapper.
 
-## Extras
-
-### How is this application testable?
-- Yes, this application is testable locally or remotely. Check the following section: `How to install and use an application`. As Windows user, I recommend Docker Desktop, because it's already configured and easy to use.
-
-### Deploying in a remote location
-- You can deploy this application somewhere remote e.g. 
-    - https://aws.amazon.com/ AWS (Amazon Web Services) 
-    - https://kinsta.com/
-    - https://www.hetzner.com/
-    - Microsoft Azure
-- Buy a plan, and create a new host (like Ubuntu & Linux virtual host)
-- Create both staging and live instances in the hosting provider (this feature is available in Kinsta)
-    - The staging server needs a secure VPN connection or something else method.
-- Install all of the required libraries and packages for this application: 
-    - Java
-        - `sudo apt-get install openjdk-17-jdk openjdk-17-jre`
-        - If you want, you can check the java version by command: `java --version`
-    - Maven
-        - `sudo apt-get install maven`
-    - PostgreSQL
-        - `sudo apt install postgresql postgresql-contrib`
-        - after installation, configure the username, password and database 
-    - and optional libraries, if needed (like Adminer for PostgreSQL Web UI).
-- Create a new SSH user and genereate the new SSH key for automation development like CI/CD. This is a simple, easy and good enough for development automations. (https://buddy.works/)
-- Clone the repository in your remote host in somewhere your workspace directory.
-- Configure the `application.properties` file for the database settings and connection.
-- Clean and package the project manually in your remote host: `mvn clean package`. 
-- You can run the application manually in your remote host: `mvn spring-boot:run`. 
-- Coding the new stuff in your production and staging servers. The code needs the pull request "PR" check. Somebody needs to check your code before approving. This confirms and prevents faulty and bug code to the server.
-- All done! You can configure the CI/CD automation for the auto-deployment. The automation deployment needs the SSH key of the user and creates the build commands (e.g YML-config files).
-
-
-### What kind of cumulative and monthly balance uses in code and query?
-
-#### Monthly balance and cumulative balance(s)
-
-The following query shows the monthly transactions and cumulative balances each month - date.
-The query is used in `TransactionRepository.java` file. 
-
-```sql
-SELECT
-    t.*
-FROM
-    (
-        SELECT
-            id,
-            amount,
-            DATE(created_at) AS date,
-            comment as message,
-            customer_id,
-            SUM(amount) OVER(
-                ORDER BY
-                    created_at
-            ) AS cumulativesum
-        FROM
-            transactions
-        WHERE
-            (
-                '2023-07-31' IS NULL
-                OR DATE(created_at) <= TO_TIMESTAMP('2023-07-31', 'YYYY-MM-DD')
-            )
-    ) t
-WHERE
-    (
-        '2023-07-01' IS NULL
-        OR date >= TO_TIMESTAMP('2023-07-01', 'YYYY-MM-DD')
-    )
-ORDER by
-    date ASC
+```bash
+git clone https://github.com/jussipalanen/jalabank-spring-boot.git
+cd jalabank-spring-boot/release
+./mvnw spring-boot:run
 ```
 
-#### Single row of monthly balance
+Open <http://localhost:8080>.
 
-```sql
-SELECT
-    t.cumulativesum
-FROM
-    (
-        SELECT
-            id,
-            amount,
-            DATE(created_at) AS date,
-            comment as message,
-            customer_id,
-            SUM(amount) OVER(
-                ORDER BY
-                    created_at
-            ) AS cumulativesum
-        FROM
-            transactions
-        WHERE
-            (
-                '2023-07-31' IS NULL
-                OR DATE(created_at) <= TO_TIMESTAMP('2023-07-31', 'YYYY-MM-DD')
-            )
-    ) t
-WHERE
-    (
-        '2023-07-01' IS NULL
-        OR date >= TO_TIMESTAMP('2023-07-01', 'YYYY-MM-DD')
-    )
-ORDER by
-    date DESC
-LIMIT
-    1
+<details>
+<summary><b>More commands</b></summary>
+
+| Task | Command (in `release/`) |
+|---|---|
+| Run the tests | `./mvnw test` |
+| Build a runnable jar | `./mvnw package`, which creates `target/jalabank.jar` |
+| Run the jar | `java -jar target/jalabank.jar` |
+| Use another port | `PORT=9090 java -jar target/jalabank.jar` |
+| Health check | `curl http://localhost:8080/actuator/health` |
+
+On Windows, use `mvnw.cmd` instead of `./mvnw`.
+
+</details>
+
+---
+
+## Docker
+
+**Requirements:** [Docker Desktop](https://docs.docker.com/get-docker/) or Docker Engine with the Compose plugin. On Windows, enable the WSL 2 integration.
+
+```bash
+cd jalabank-spring-boot/release
+docker compose up --build
 ```
 
+Open <http://localhost:8080>. Stop with `Ctrl+C`, or with `docker compose down`.
 
-#### Single row of latest cumulative balance 
-```sql
-SELECT
-    SUM(t1.amount) OVER (
-        ORDER BY
-            t1.created_at
-    )
-FROM
-    transactions as t1
-ORDER BY
-    created_at DESC
-LIMIT
-    1
+<details>
+<summary><b>Toolbox script and plain Docker</b></summary>
+
+The `toolbox` script wraps the Compose commands:
+
+```bash
+sh toolbox start   # build and start
+sh toolbox build   # rebuild from scratch, without cache, and start
+sh toolbox stop    # stop and remove the container
 ```
 
-#### List of the latest cumulative balances
-```sql
-SELECT
-    t1.id,
-    t1.amount,
-    t1.created_at,
-    t1.comment,
-    (
-        SUM(t1.amount) OVER (
-            ORDER BY
-                t1.created_at
-        )
-    ) as cumulativesum
-FROM
-    transactions as t1
-ORDER BY
-    created_at ASC
+Without Compose:
+
+```bash
+docker build -t jalabank-demo .
+docker run --rm -p 8080:8080 jalabank-demo
 ```
 
+The image is a two-stage build. The first stage runs the tests and builds the jar with Maven, and the second runs it on a slim Java 21 runtime as a non-root user. Java's memory is capped at 75 % of the container's limit, so the app also fits small 512 MB hosting plans.
 
-### How to test Rest APIs?
-- Check the API section in this file. Postman application is useful to use those things.
+</details>
 
-### This application is a demo version at the moment, what kind of features are upcoming on full release?
-- User registration
-- User authentication with username and password
-- Strong authentication for user login and transaction confirmation. This uses the external OpenClient APIs like "Telia vahva tunnistautuminen".
-- Better validation of the forms
-- Filters on the transaction view
-- Better repository functions and the repository functions use the Postgres query functions.
-- ... any ideas?
+---
 
-Hopefully this guide works! 
+## Host on Render
+
+[Render](https://render.com) runs the app straight from this repository using the `Dockerfile`. No database is needed, so you only create **one web service**.
+
+### Option A: Blueprint (one click)
+
+The repository has a `render.yaml` blueprint at its root.
+
+1. Push the code to GitHub. Render deploys from the branch you choose, usually `main`.
+2. In the Render dashboard, choose **New → Blueprint**.
+3. Connect your GitHub account if you haven't already, and pick the `jalabank-spring-boot` repository.
+4. Render reads `render.yaml` and shows one web service named **jalabank**. Choose **Apply**.
+5. The first build takes a few minutes. When it finishes, open the `https://jalabank-xxxx.onrender.com` URL shown on the service page.
+
+### Option B: Set it up by hand
+
+1. In the Render dashboard, choose **New → Web Service** and pick the repository.
+2. Fill in:
+
+   | Setting | Value |
+   |---|---|
+   | Language / Runtime | **Docker** |
+   | Branch | `main` |
+   | Root Directory | `release` |
+   | Dockerfile Path | `./Dockerfile` (relative to the root directory) |
+   | Instance Type | **Free** works for the demo |
+
+3. Under **Advanced**, set **Health Check Path** to `/actuator/health`.
+4. Choose **Create Web Service**.
+
+No environment variables are needed. Render tells the app which port to use through the `PORT` variable, and the app reads it (`server.port=${PORT:8080}`).
+
+<details>
+<summary><b>Good to know about Render</b></summary>
+
+- **Auto-deploy:** each push to the deployed branch rebuilds and redeploys the app. With the blueprint, only changes under `release/` trigger a build.
+- **Free instances sleep** after about 15 minutes without traffic. The first visit after that wakes the service, which can take up to about a minute. The app itself starts in a few seconds.
+- **Data resets** whenever the service restarts, redeploys or wakes from sleep, because the demo data lives in memory. That is intended for a demo.
+- **Memory:** free instances have 512 MB. The app uses about 150–250 MB.
+- **Custom domain:** add it under the service's **Settings → Custom Domains**.
+- **Logs:** the service's **Logs** tab shows the application output. Look for `Started ReleaseApplication`.
+- Render's plans and limits change from time to time, so check [render.com/pricing](https://render.com/pricing) for the current ones.
+
+</details>
+
+---
+
+## REST API
+
+Base URL: `http://localhost:8080/api/v1`, or your Render URL followed by `/api/v1`.
+
+| Method | Endpoint | Description |
+|---|---|---|
+| `GET` | `/transactions` | The transactions, newest first by default |
+| `GET` | `/transactions/count` | The number of transactions |
+| `GET` | `/customers` | All customers |
+| `GET` | `/customers/{id}` | One customer, or `404` if it doesn't exist |
+
+<details>
+<summary><b>Query parameters for <code>/transactions</code></b></summary>
+
+| Parameter | Values | Default |
+|---|---|---|
+| `page` | `1`, `2`, … (one-based) | `1` |
+| `size` | page size | all transactions |
+| `sortBy` | `id`, `amount`, `date` | `date` |
+| `sortDirection` | `ASC`, `DESC` (any case) | `DESC` |
+
+An unknown `sortBy` or `sortDirection` returns `400 Bad Request`.
+
+```bash
+curl "http://localhost:8080/api/v1/transactions?page=1&size=3&sortBy=date&sortDirection=DESC"
+```
+
+```json
+[
+  { "id": "0b4f5d2e-6a8c-4a4e-9a7e-1f2b3c4d5e6f", "amount": -54.20, "date": "2026-10-04" },
+  { "id": "5c2a7e90-3d1b-4f6a-8c9e-2a3b4c5d6e7f", "amount": -950.00, "date": "2026-10-03" },
+  { "id": "9e8d7c6b-5a4f-4e3d-8c2b-1a0f9e8d7c6b", "amount": 3200.00, "date": "2026-10-01" }
+]
+```
+
+</details>
+
+---
+
+## Project structure
+
+<details>
+<summary><b>Files and packages</b></summary>
+
+```
+render.yaml                      Render blueprint
+release/
+├── Dockerfile                   two-stage image build
+├── docker-compose.yml           local Docker run
+├── toolbox                      helper script for Docker Compose
+├── pom.xml
+└── src/
+    ├── main/java/jussinet/jalabank/release/
+    │   ├── ReleaseApplication.java      entry point
+    │   ├── controller/                  web pages and REST API
+    │   ├── model/                       records: Customer, Transaction, StatementRow, …
+    │   ├── repository/                  in-memory stores
+    │   ├── service/                     balance calculations and demo data
+    │   └── web/                         form object and money formatting
+    ├── main/resources/
+    │   ├── application.properties
+    │   └── templates/                   Thymeleaf pages
+    └── test/                            unit and web tests
+```
+
+</details>
+
+<details>
+<summary><b>Ideas for later</b></summary>
+
+- User registration and login
+- Strong authentication for login and confirming transactions
+- Per-customer balances and filters on the transaction view
+- An optional real database (for example PostgreSQL) behind the same repositories
+
+</details>
+
+---
 
 ## Screenshots
 
-### Monthly balance, transactions (with filters), and cumulative balance(s)
+<details open>
+<summary><b>Balances: monthly transactions with cumulative balances</b></summary>
 
-![image description](screenshots/screenshot1.png)
+![Balances page](screenshots/screenshot3.png)
 
-### API transaction view
-![image description](screenshots/screenshot2.png)
+</details>
 
-### Add transaction
-![image description](screenshots/screenshot3.png)
+<details>
+<summary><b>Add transaction</b></summary>
 
-### Home page
-(This shows the latest cumulative balance of the current customer.)
-![image description](screenshots/screenshot4.png)
+![Add transaction form](screenshots/screenshot2.png)
+
+</details>
+
+<details>
+<summary><b>Home</b></summary>
+
+![Home page with the current balance](screenshots/screenshot1.png)
+
+</details>
+
+<details>
+<summary><b>API docs</b></summary>
+
+![API docs page](screenshots/screenshot4.png)
+
+</details>
