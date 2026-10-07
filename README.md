@@ -47,8 +47,8 @@ All amounts are `BigDecimal`, so there are no floating-point rounding errors. `T
 **Requirements:** Java 21 or newer. Maven is optional, because the project includes the Maven wrapper.
 
 ```bash
-git clone https://github.com/jussipalanen/jalabank-java-spring-boot.git
-cd jalabank-java-spring-boot/release
+git clone https://github.com/jussipalanen/jalabank-spring-boot.git
+cd jalabank-spring-boot/release
 ./mvnw spring-boot:run
 ```
 
@@ -76,7 +76,7 @@ On Windows, use `mvnw.cmd` instead of `./mvnw`.
 **Requirements:** [Docker Desktop](https://docs.docker.com/get-docker/) or Docker Engine with the Compose plugin. On Windows, enable the WSL 2 integration.
 
 ```bash
-cd jalabank-java-spring-boot/release
+cd jalabank-spring-boot/release
 docker compose up --build
 ```
 
@@ -116,7 +116,7 @@ The repository has a `render.yaml` blueprint at its root.
 
 1. Push the code to GitHub. Render deploys from the branch you choose, usually `main`.
 2. In the Render dashboard, choose **New → Blueprint**.
-3. Connect your GitHub account if you haven't already, and pick the `jalabank-java-spring-boot` repository.
+3. Connect your GitHub account if you haven't already, and pick the `jalabank-spring-boot` repository.
 4. Render reads `render.yaml` and shows one web service named **jalabank**. Choose **Apply**.
 5. The first build takes a few minutes. When it finishes, open the `https://jalabank-xxxx.onrender.com` URL shown on the service page.
 
