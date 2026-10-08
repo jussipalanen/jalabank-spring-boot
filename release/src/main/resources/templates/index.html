@@ -13,11 +13,6 @@
                 <h1 class="h3 mb-1">Dashboard</h1>
                 <p class="text-body-secondary mb-0">Hello <span th:text="${customer.firstname}"></span>, here is your overview.</p>
             </div>
-            <form method="get" class="d-flex align-items-center gap-2">
-                <label for="customerId" class="text-body-secondary small mb-0">Customer</label>
-                <select th:replace="~{fragments/customer :: picker}"></select>
-                <noscript><button class="btn btn-primary" type="submit">Show</button></noscript>
-            </form>
         </div>
 
         <div class="row g-3 mb-4">
@@ -63,8 +58,8 @@
             <div class="card-header d-flex flex-wrap align-items-center justify-content-between gap-2">
                 <h2 class="h6 mb-0">Recent transactions</h2>
                 <div class="d-flex gap-2">
-                    <a class="btn btn-sm btn-outline-light" th:href="@{/balances(customerId=${customer.id})}">View all</a>
-                    <a class="btn btn-sm btn-primary" th:href="@{/transaction(customerId=${customer.id})}">Add transaction</a>
+                    <a class="btn btn-sm btn-outline-light" th:href="@{/balances}">View all</a>
+                    <a class="btn btn-sm btn-primary" th:href="@{/transaction}">Add transaction</a>
                 </div>
             </div>
             <div class="table-responsive">

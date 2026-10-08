@@ -1,10 +1,10 @@
 # Jalabank Demo Application
 
-A small demo bank built with **Java 21** and **Spring Boot 4**, with a dark blue web UI. Add, browse and delete deposits and withdrawals per customer, see the cumulative balance after each transaction, and use the same data through a REST API documented with OpenAPI at **`/docs`**.
+A small demo bank built with **Java 21** and **Spring Boot 4**, with a dark blue web UI. Sign in as a customer with an hourly 6-digit authenticator code, add, browse and delete your deposits and withdrawals, see the cumulative balance after each transaction, and use the same data through a REST API documented with OpenAPI at **`/docs`**.
 
 The app needs **no database**. It starts with about six months of realistic demo data (salary, rent, groceries, card payments) kept in memory, so it runs anywhere with one command. Everything you add resets when the app restarts.
 
-**[Overview](#overview)** · **[Run locally](#run-locally)** · **[Docker](#docker)** · **[Host on Render](#host-on-render)** · **[REST API](#rest-api)** · **[Project structure](#project-structure)** · **[Screenshots](#screenshots)**
+**[Overview](#overview)** · **[Signing in](#signing-in)** · **[Run locally](#run-locally)** · **[Docker](#docker)** · **[Host on Render](#host-on-render)** · **[REST API](#rest-api)** · **[Project structure](#project-structure)** · **[Screenshots](#screenshots)**
 
 ---
 
@@ -12,12 +12,13 @@ The app needs **no database**. It starts with about six months of realistic demo
 
 | Page | What it does |
 |---|---|
-| **Dashboard** (`/`) | The selected customer's current balance, this month's income and expenses, scheduled (future-dated) transactions, and the latest transactions. |
-| **Balances** (`/balances`) | One customer's transactions in a month, with the cumulative balance after each one and the month's totals. Change the month with the arrows or the filters. The list is paginated (5–1000 rows per page). Delete one transaction with its trash button, or tick several (or all on the page) and choose **Delete selected**. Both ask for confirmation first. |
-| **Add transaction** (`/transaction`) | Form for a deposit or withdrawal, with a customer, date and message. Amounts are validated (0.01 to 9 999 999, two decimals at most). A future date makes it a scheduled transaction. |
+| **Sign in** (`/login`, `/authenticator`) | Choose a customer and enter that customer's 6-digit code for the current hour. The codes are listed in the authenticator pop-up window. See [Signing in](#signing-in). |
+| **Dashboard** (`/`) | The signed-in customer's current balance, this month's income and expenses, scheduled (future-dated) transactions, and the latest transactions. |
+| **Balances** (`/balances`) | The customer's transactions in a month, with the cumulative balance after each one and the month's totals. Change the month with the arrows or the filters. The list is paginated (5–1000 rows per page). Delete one transaction with its trash button, or tick several (or all on the page) and choose **Delete selected**. Both ask for confirmation first. |
+| **Add transaction** (`/transaction`) | Form for a deposit or withdrawal to the signed-in customer's account, with a date and message. Amounts are validated (0.01 to 9 999 999, two decimals at most). A future date makes it a scheduled transaction. |
 | **API docs** (`/docs`) | Swagger UI generated from the code. Every endpoint can be tried out in the browser. |
 
-**Tech stack:** Java 21 · Spring Boot 4.1 (Web MVC, Thymeleaf, Validation, Actuator) · springdoc-openapi (Swagger UI) · Bootstrap 5.3 dark mode with a custom navy theme (bundled, no CDN) · JUnit 5 + AssertJ · Docker.
+**Tech stack:** Java 21 · Spring Boot 4.1 (Web MVC, Thymeleaf, Validation, Security, Actuator) · springdoc-openapi (Swagger UI) · Bootstrap 5.3 dark mode with a custom navy theme (bundled, no CDN) · JUnit 5 + AssertJ · Docker.
 
 <details>
 <summary><b>How the demo data works</b></summary>
@@ -40,6 +41,29 @@ All amounts are `BigDecimal`, so there are no floating-point rounding errors. `T
 - **Income / expenses:** the sum of the month's deposits and of its withdrawals.
 
 The tests recompute every cumulative balance independently to check this.
+
+</details>
+
+---
+
+## Signing in
+
+Every page and the REST API need a signed-in customer. Signing in has two steps:
+
+1. **Choose a customer.** On `/login`, pick **John Doe** or **Jane Doe** from the list and choose **Log in**. There are no passwords in the demo.
+2. **Enter the authenticator code.** On `/authenticator`, choose **Open authenticator**. A pop-up window lists the customer's code for the current hour (marked **Valid now**) and for the next five hours. Choose **Copy** next to the current code, paste it into the code field and choose **Verify and sign in**.
+
+To switch customers, choose **Sign out** in the top bar and sign in again. While signed in, you only see and change your own transactions.
+
+<details>
+<summary><b>How the authenticator works</b></summary>
+
+- `AuthenticatorService` gives each customer a random 6-digit code for each clock hour (from `SecureRandom`). The codes are created when first needed and kept in memory, so they change when the app restarts. Codes from before the previous hour are forgotten.
+- A code is valid during its own hour and for the first two minutes of the next one, so a code copied at 13:59 still works when you submit it at 14:00.
+- After 5 wrong codes, sign-in starts over from choosing the customer.
+- The customer is signed in only after the right code. Until then, every page except the sign-in pages redirects to `/login`, and the API answers `401`. After the right code, the session gets a new id.
+- Times in the authenticator are in the server's time zone, usually UTC on hosting services.
+- This is a demo of the sign-in flow, not real security: anyone who opens the app can choose a customer and read that customer's codes in the authenticator window. It has no Google or Microsoft Authenticator or other external service.
 
 </details>
 
@@ -196,14 +220,17 @@ No environment variables are needed. Render tells the app which port to use thro
 
 Errors are returned as JSON [problem details](https://www.rfc-editor.org/rfc/rfc9457) with `status`, `title` and `detail`.
 
+**Sign in first.** The `/api/v1` endpoints need a signed-in customer and work only on that customer's own transactions. In the browser, [sign in](#signing-in) and then open `/docs` in the same browser: **Execute** sends your session cookie along. Without a session the API answers `401 Unauthorized`. Another customer's transactions are reported as `404 Not Found`, and a `customerId` other than your own gives `403 Forbidden`. `/api/health` and `/actuator/health` stay public.
+
 | Method | Endpoint | Description |
 |---|---|---|
-| `GET` | `/api/v1/transactions` | One page of transactions (filter by customer, sort) |
-| `GET` | `/api/v1/transactions/{id}` | One transaction, or `404` |
-| `GET` | `/api/v1/transactions/count` | Number of transactions |
+| `GET` | `/api/v1/transactions` | One page of your transactions (sorted) |
+| `GET` | `/api/v1/transactions/{id}` | One of your transactions, or `404` |
+| `GET` | `/api/v1/transactions/count` | Number of your transactions |
 | `POST` | `/api/v1/transactions` | Add a transaction (`201` with a `Location` header) |
 | `DELETE` | `/api/v1/transactions/{id}` | Delete one transaction (`204`, or `404`) |
 | `DELETE` | `/api/v1/transactions?ids=…&ids=…` | Delete several; reports how many were deleted and which ids were not found |
+| `GET` | `/api/v1/customers/me` | The signed-in customer |
 | `GET` | `/api/v1/customers` | One page of customers |
 | `GET` | `/api/v1/customers/{id}` | One customer, or `404` |
 | `GET` | `/api/health` | Health status, application name and version, uptime and transaction count; `503` when unhealthy |
@@ -218,14 +245,14 @@ List endpoints return one page at a time:
 |---|---|---|
 | `page` | `1`, `2`, … (one-based) | `1` |
 | `size` | `1`–`1000` | `20` |
-| `customerId` | a customer id (transactions only) | all customers |
+| `customerId` | your own customer id (transactions only; any other id gives `403`) | you |
 | `sortBy` | `date`, `amount`, `id` (transactions only) | `date` |
 | `sortDirection` | `DESC`, `ASC`, any case (transactions only) | `DESC` |
 
 An unknown `sortBy` or `sortDirection` returns `400 Bad Request`.
 
 ```bash
-curl "http://localhost:8080/api/v1/transactions?customerId=1&page=1&size=2"
+curl -b "JSESSIONID=<your session id>" "http://localhost:8080/api/v1/transactions?page=1&size=2"
 ```
 
 ```json
@@ -246,17 +273,21 @@ curl "http://localhost:8080/api/v1/transactions?customerId=1&page=1&size=2"
 <details>
 <summary><b>Add and delete with curl</b></summary>
 
+curl needs the session cookie of a signed-in browser. After signing in, copy the `JSESSIONID` cookie from the browser's developer tools (**Application → Cookies** in Chrome).
+
 ```bash
-# Add a withdrawal for customer 1 (the date defaults to today)
-curl -X POST http://localhost:8080/api/v1/transactions \
+SESSION="JSESSIONID=<your session id>"
+
+# Add a withdrawal for the signed-in customer (the date defaults to today)
+curl -b "$SESSION" -X POST http://localhost:8080/api/v1/transactions \
   -H "Content-Type: application/json" \
-  -d '{"customerId": 1, "amount": -12.50, "message": "Coffee"}'
+  -d '{"amount": -12.50, "message": "Coffee"}'
 
 # Delete one
-curl -X DELETE http://localhost:8080/api/v1/transactions/3f1c2b9e-8d4a-4c1e-9b7f-2a6d5e4c3b21
+curl -b "$SESSION" -X DELETE http://localhost:8080/api/v1/transactions/3f1c2b9e-8d4a-4c1e-9b7f-2a6d5e4c3b21
 
 # Delete several
-curl -X DELETE "http://localhost:8080/api/v1/transactions?ids=<id1>&ids=<id2>"
+curl -b "$SESSION" -X DELETE "http://localhost:8080/api/v1/transactions?ids=<id1>&ids=<id2>"
 ```
 
 </details>
@@ -269,7 +300,7 @@ curl http://localhost:8080/api/health
 ```
 
 ```json
-{ "status": "UP", "application": "jalabank", "version": "2.1.0", "uptimeSeconds": 3600, "transactions": 107, "time": "2026-10-07T21:30:00Z" }
+{ "status": "UP", "application": "jalabank", "version": "2.2.0", "uptimeSeconds": 3600, "transactions": 107, "time": "2026-10-07T21:30:00Z" }
 ```
 
 `/api/health` takes its status from the actuator's `/actuator/health`. Both appear in `/docs`.
@@ -295,11 +326,12 @@ release/
     ├── main/java/jussinet/jalabank/release/
     │   ├── ReleaseApplication.java      entry point
     │   ├── api/                         REST API, health check and OpenAPI settings
-    │   ├── controller/                  web pages
+    │   ├── controller/                  web pages and sign-in
     │   ├── model/                       records: Customer, Transaction, StatementRow, ApiPage, …
     │   ├── repository/                  in-memory stores
+    │   ├── security/                    access rules and the hourly authenticator codes
     │   ├── service/                     balance calculations and demo data
-    │   └── web/                         form object and money formatting
+    │   └── web/                         form object, money formatting and the signed-in customer
     ├── main/resources/
     │   ├── application.properties
     │   ├── static/                      theme (css/app.css) and page script (js/app.js)
@@ -312,8 +344,8 @@ release/
 <details>
 <summary><b>Ideas for later</b></summary>
 
-- User registration and login
-- Strong authentication for login and confirming transactions
+- User registration and passwords
+- Confirming transactions with the authenticator code
 - Search and category filters on the transaction view
 - An optional real database (for example PostgreSQL) behind the same repositories
 
@@ -322,6 +354,13 @@ release/
 ---
 
 ## Screenshots
+
+<details open>
+<summary><b>Sign in: enter the authenticator code, with the code list in a pop-up window</b></summary>
+
+![Authenticator code page with the authenticator pop-up window listing the hourly codes](screenshots/screenshot5.png)
+
+</details>
 
 <details open>
 <summary><b>Balances: monthly transactions with cumulative balances, selection and pagination</b></summary>

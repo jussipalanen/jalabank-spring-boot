@@ -18,9 +18,9 @@
             </div>
             <div class="btn-group" role="group" aria-label="Change month">
                 <a class="btn btn-outline-light"
-                    th:href="@{/balances(customerId=${customer.id}, year=${previousMonth.year}, month=${previousMonth.monthValue}, size=${size})}">&larr; Previous month</a>
+                    th:href="@{/balances(year=${previousMonth.year}, month=${previousMonth.monthValue}, size=${size})}">&larr; Previous month</a>
                 <a class="btn btn-outline-light"
-                    th:href="@{/balances(customerId=${customer.id}, year=${nextMonth.year}, month=${nextMonth.monthValue}, size=${size})}">Next month &rarr;</a>
+                    th:href="@{/balances(year=${nextMonth.year}, month=${nextMonth.monthValue}, size=${size})}">Next month &rarr;</a>
             </div>
         </div>
 
@@ -28,11 +28,7 @@
         <div class="card mb-4">
             <div class="card-body">
                 <form method="get" class="row g-3 align-items-end">
-                    <div class="col-sm-6 col-lg-3">
-                        <label for="customerId" class="form-label small text-body-secondary">Customer</label>
-                        <select th:replace="~{fragments/customer :: picker}"></select>
-                    </div>
-                    <div class="col-6 col-lg-2">
+                    <div class="col-6 col-lg-3">
                         <label for="year" class="form-label small text-body-secondary">Year</label>
                         <select class="form-select" name="year" id="year" data-autosubmit>
                             <option th:each="yearVal : ${years}" th:selected="${year == yearVal}"
@@ -46,14 +42,14 @@
                                 th:value="${monthItem.number}" th:text="${monthItem.name}"></option>
                         </select>
                     </div>
-                    <div class="col-6 col-lg-2">
+                    <div class="col-6 col-lg-3">
                         <label for="size" class="form-label small text-body-secondary">Rows per page</label>
                         <select class="form-select" name="size" id="size" data-autosubmit>
                             <option th:each="sizeVal : ${pageSizes}" th:selected="${size == sizeVal}"
                                 th:value="${sizeVal}" th:text="${sizeVal}"></option>
                         </select>
                     </div>
-                    <div class="col-6 col-lg-2 d-grid">
+                    <div class="col-6 col-lg-3 d-grid">
                         <button type="submit" class="btn btn-primary">Show</button>
                     </div>
                 </form>
@@ -98,7 +94,6 @@
 
         <!-- Transactions -->
         <form method="post" th:action="@{/transactions/delete}" class="card">
-            <input type="hidden" name="customerId" th:value="${customer.id}">
             <input type="hidden" name="year" th:value="${year}">
             <input type="hidden" name="month" th:value="${month}">
             <input type="hidden" name="page" th:value="${transactions.currentPage}">
@@ -111,7 +106,7 @@
                         data-confirm="Delete the selected transactions?">
                         Delete selected (<span id="selected-count">0</span>)
                     </button>
-                    <a class="btn btn-sm btn-primary" th:href="@{/transaction(customerId=${customer.id})}">Add transaction</a>
+                    <a class="btn btn-sm btn-primary" th:href="@{/transaction}">Add transaction</a>
                 </div>
             </div>
 
@@ -174,18 +169,18 @@
                     <ul class="pagination pagination-sm flex-wrap">
                         <li class="page-item" th:classappend="${!transactions.hasPrevious} ? disabled">
                             <a class="page-link"
-                                th:href="@{/balances(customerId=${customer.id}, year=${year}, month=${month}, size=${size}, page=${transactions.currentPage - 1})}">&laquo; Previous</a>
+                                th:href="@{/balances(year=${year}, month=${month}, size=${size}, page=${transactions.currentPage - 1})}">&laquo; Previous</a>
                         </li>
                         <li class="page-item" th:each="p : ${transactions.pageWindow}"
                             th:classappend="${p == null ? 'disabled' : (p == transactions.currentPage ? 'active' : '')}">
                             <span class="page-link" th:if="${p == null}">&hellip;</span>
                             <a class="page-link" th:if="${p != null}" th:text="${p}"
                                 th:attr="aria-current=${p == transactions.currentPage ? 'page' : null}"
-                                th:href="@{/balances(customerId=${customer.id}, year=${year}, month=${month}, size=${size}, page=${p})}"></a>
+                                th:href="@{/balances(year=${year}, month=${month}, size=${size}, page=${p})}"></a>
                         </li>
                         <li class="page-item" th:classappend="${!transactions.hasNext} ? disabled">
                             <a class="page-link"
-                                th:href="@{/balances(customerId=${customer.id}, year=${year}, month=${month}, size=${size}, page=${transactions.currentPage + 1})}">Next &raquo;</a>
+                                th:href="@{/balances(year=${year}, month=${month}, size=${size}, page=${transactions.currentPage + 1})}">Next &raquo;</a>
                         </li>
                     </ul>
                 </nav>

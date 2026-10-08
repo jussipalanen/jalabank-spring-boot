@@ -20,12 +20,9 @@
                     <div class="row g-4">
                         <div class="col-lg-6">
                             <div class="mb-3">
-                                <label for="customerId" class="form-label">Customer</label>
-                                <select class="form-select" th:field="*{customerId}" th:errorclass="is-invalid">
-                                    <option th:each="c : ${customers}" th:value="${c.id}"
-                                        th:text="|${c.fullName} (${c.email})|"></option>
-                                </select>
-                                <div class="invalid-feedback" th:errors="*{customerId}"></div>
+                                <span class="form-label d-block">Account</span>
+                                <div class="form-control-plaintext py-0" id="account"
+                                    th:text="|${customer.fullName} (${customer.email})|"></div>
                             </div>
 
                             <div class="mb-3">

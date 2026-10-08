@@ -199,6 +199,70 @@ tr.selected {
     margin-bottom: 0;
 }
 
+/* Sign-in */
+.jb-user {
+    white-space: nowrap;
+}
+
+.auth-card {
+    max-width: 30rem;
+}
+
+.auth-step {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--jb-blue-400);
+    font-weight: 600;
+    margin-bottom: 0.35rem;
+}
+
+.code-input {
+    font-family: var(--bs-font-monospace);
+    font-size: 1.6rem;
+    letter-spacing: 0.4em;
+    text-align: center;
+}
+
+.auth-codes-link {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 0.9rem 1rem;
+    border: 1px dashed var(--bs-border-color);
+    border-radius: 0.6rem;
+    background: rgba(59, 130, 246, 0.06);
+}
+
+/* Authenticator pop-up window */
+.authenticator-window main {
+    max-width: 30rem;
+}
+
+.code-list {
+    --bs-list-group-bg: rgba(13, 29, 59, 0.85);
+    --bs-list-group-border-color: var(--bs-border-color);
+}
+
+.code-list .code-value {
+    font-family: var(--bs-font-monospace);
+    font-size: 1.35rem;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    color: var(--bs-secondary-color);
+}
+
+.code-list .code-current {
+    background: rgba(37, 99, 235, 0.16);
+}
+
+.code-list .code-current .code-value {
+    font-size: 1.8rem;
+    color: var(--bs-emphasis-color);
+}
+
 .jb-footer {
     border-top: 1px solid var(--bs-border-color-translucent);
     color: var(--bs-secondary-color);

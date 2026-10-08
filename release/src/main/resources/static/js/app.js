@@ -9,6 +9,43 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     });
 
+    // Open a link in a small pop-up window: <a href="..." target="name" data-popup="width=460,height=640">.
+    // If the browser blocks the pop-up, the link opens normally in a new tab.
+    document.querySelectorAll("a[data-popup]").forEach((link) => {
+        link.addEventListener("click", (event) => {
+            const popup = window.open(link.href, link.target || "_blank", `popup,${link.dataset.popup}`);
+            if (popup) {
+                popup.focus();
+                event.preventDefault();
+            }
+        });
+    });
+
+    // Copy a value to the clipboard: <button data-copy="123456">
+    document.querySelectorAll("button[data-copy]").forEach((button) => {
+        const label = button.textContent;
+        button.addEventListener("click", async () => {
+            try {
+                await navigator.clipboard.writeText(button.dataset.copy);
+            } catch {
+                // Older browsers, or a page that is not https or localhost
+                const field = document.createElement("textarea");
+                field.value = button.dataset.copy;
+                document.body.append(field);
+                field.select();
+                document.execCommand("copy");
+                field.remove();
+            }
+            button.textContent = "Copied";
+            setTimeout(() => (button.textContent = label), 1500);
+        });
+    });
+
+    // Close a pop-up window: <button data-close-window>
+    document.querySelectorAll("[data-close-window]").forEach((button) => {
+        button.addEventListener("click", () => window.close());
+    });
+
     // Submit a filter form as soon as a select changes: <select data-autosubmit>
     document.querySelectorAll("select[data-autosubmit]").forEach((select) => {
         select.addEventListener("change", () => select.form.submit());

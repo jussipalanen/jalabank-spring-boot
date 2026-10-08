@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en" data-bs-theme="dark">
+
+<head th:replace="~{fragments/header :: head('Authenticator')}"></head>
+
+<body>
+    <nav th:replace="~{fragments/navigation :: navigation('')}"></nav>
+    <main class="container py-5">
+        <div class="auth-card mx-auto">
+            <div th:replace="~{fragments/alerts :: alerts}"></div>
+
+            <div class="card">
+                <div class="card-body p-4">
+                    <div class="auth-step">Step 2 of 2</div>
+                    <h1 class="h3 mb-1">Enter your code</h1>
+                    <p class="text-body-secondary mb-4">
+                        Signing in as <b class="text-body" th:text="${customer.fullName}"></b>. Enter the 6-digit
+                        code for the current hour from the authenticator.
+                    </p>
+
+                    <form method="post" th:action="@{/authenticator}">
+                        <div class="mb-3">
+                            <label for="code" class="form-label">Authenticator code</label>
+                            <input class="form-control form-control-lg code-input" type="text" name="code" id="code"
+                                inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6}" maxlength="6"
+                                placeholder="000000" title="6 digits" required autofocus>
+                            <div class="form-text" id="attempts-left"
+                                th:text="|${attemptsLeft} ${attemptsLeft == 1 ? 'attempt' : 'attempts'} left.|"></div>
+                        </div>
+                        <div class="d-grid mb-3">
+                            <button type="submit" class="btn btn-primary btn-lg">Verify and sign in</button>
+                        </div>
+                    </form>
+
+                    <div class="auth-codes-link">
+                        <div>
+                            <div class="fw-semibold">Need a code?</div>
+                            <div class="small text-body-secondary">The authenticator lists your codes for this and
+                                the next hours.</div>
+                        </div>
+                        <a class="btn btn-outline-light" id="open-authenticator" th:href="@{/authenticator/codes}"
+                            target="jalabank-authenticator" data-popup="width=460,height=720">Open authenticator</a>
+                    </div>
+                </div>
+            </div>
+
+            <p class="text-center mt-3 mb-0">
+                <a th:href="@{/login}" class="link-secondary small">&larr; Choose another customer</a>
+            </p>
+        </div>
+    </main>
+    <footer th:replace="~{fragments/footer :: footer}"></footer>
+</body>
+</html>

@@ -12,6 +12,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 
@@ -62,8 +63,20 @@ public class TransactionService {
         return transactionRepository.findById(id);
     }
 
-    public DeleteResult delete(Collection<UUID> ids) {
-        Set<UUID> deleted = transactionRepository.deleteAllById(ids);
+    /** The transaction, if it exists and belongs to the customer */
+    public Optional<Transaction> findById(long customerId, UUID id) {
+        return findById(id).filter(t -> t.customerId() == customerId);
+    }
+
+    /**
+     * Deletes the customer's transactions with the given ids. Ids of other customers' transactions count as not
+     * found, so a customer can only delete their own.
+     */
+    public DeleteResult delete(long customerId, Collection<UUID> ids) {
+        Set<UUID> own = ids.stream()
+                .filter(id -> isOwnedBy(id, customerId))
+                .collect(Collectors.toSet());
+        Set<UUID> deleted = transactionRepository.deleteAllById(own);
         List<UUID> notFound = ids.stream().distinct().filter(id -> !deleted.contains(id)).toList();
         return new DeleteResult(deleted.size(), notFound);
     }
@@ -161,6 +174,14 @@ public class TransactionService {
 
     public int count() {
         return transactionRepository.count();
+    }
+
+    public int count(long customerId) {
+        return ledger(customerId).size();
+    }
+
+    private boolean isOwnedBy(UUID id, long customerId) {
+        return findById(customerId, id).isPresent();
     }
 
     /** The customer's transactions in booking order */

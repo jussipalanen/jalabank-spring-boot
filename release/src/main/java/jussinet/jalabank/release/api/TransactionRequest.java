@@ -16,7 +16,7 @@ import jakarta.validation.constraints.Size;
  */
 @Schema(name = "NewTransaction", description = "A new transaction")
 public record TransactionRequest(
-        @Schema(example = "1") @NotNull Long customerId,
+        @Schema(description = "Optional; must be the signed-in customer's id", example = "1") Long customerId,
         @Schema(description = "Defaults to today", example = "2026-10-07") LocalDate date,
         @Schema(description = "Positive for a deposit, negative for a withdrawal", example = "-12.50")
         @NotNull @DecimalMin("-9999999") @DecimalMax("9999999") @Digits(integer = 7, fraction = 2) BigDecimal amount,

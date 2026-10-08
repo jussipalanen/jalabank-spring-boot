@@ -128,13 +128,33 @@ class TransactionServiceTest {
                 .map(StatementRow::id).toList();
         UUID unknown = UUID.randomUUID();
 
-        DeleteResult result = service.delete(List.of(february.get(0), february.get(1), unknown));
+        DeleteResult result = service.delete(JOHN, List.of(february.get(0), february.get(1), unknown));
 
         assertThat(result.deleted()).isEqualTo(2);
         assertThat(result.notFound()).containsExactly(unknown);
         assertThat(service.statement(JOHN, YearMonth.of(2026, 2), 0, 10).totalElements()).isZero();
         assertThat(service.currentBalance(JOHN)).isEqualByComparingTo("999.90");
         assertThat(service.currentBalance(JANE)).isEqualByComparingTo("500.00");
+    }
+
+    @Test
+    void deleteLeavesOtherCustomersTransactionsAlone() {
+        UUID janes = service.recent(JANE, 1).getFirst().id();
+
+        DeleteResult result = service.delete(JOHN, List.of(janes));
+
+        assertThat(result.deleted()).isZero();
+        assertThat(result.notFound()).containsExactly(janes);
+        assertThat(service.findById(janes)).isPresent();
+        assertThat(service.findById(JOHN, janes)).isEmpty();
+        assertThat(service.findById(JANE, janes)).isPresent();
+    }
+
+    @Test
+    void countIsPerCustomer() {
+        assertThat(service.count(JOHN)).isEqualTo(5);
+        assertThat(service.count(JANE)).isEqualTo(1);
+        assertThat(service.count()).isEqualTo(6);
     }
 
     @Test
