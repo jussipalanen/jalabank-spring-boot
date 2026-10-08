@@ -1,6 +1,0 @@
-<!-- Customer picker: a select that reloads the page for another customer -->
-<select th:fragment="picker" class="form-select" name="customerId" id="customerId" data-autosubmit
-    aria-label="Customer">
-    <option th:each="c : ${customers}" th:value="${c.id}" th:selected="${c.id == customer.id}"
-        th:text="${c.fullName}"></option>
-</select>

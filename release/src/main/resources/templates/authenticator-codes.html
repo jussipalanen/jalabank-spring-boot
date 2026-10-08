@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en" data-bs-theme="dark">
+
+<!-- The demo authenticator, opened in a pop-up window from the code page -->
+<head th:replace="~{fragments/header :: head('Authenticator codes')}"></head>
+
+<body class="authenticator-window">
+    <main class="container py-4">
+        <div class="d-flex align-items-center gap-2 mb-3">
+            <span class="jb-logo">J</span>
+            <div>
+                <h1 class="h5 mb-0">Jalabank Authenticator</h1>
+                <div class="small text-body-secondary" th:if="${customer != null}" th:text="${customer.fullName}"></div>
+            </div>
+        </div>
+
+        <div th:if="${customer == null}" class="card">
+            <div class="card-body text-center p-4">
+                <p class="mb-3">No sign-in in progress. Choose a customer on the sign-in page first, then open the
+                    authenticator again.</p>
+                <a class="btn btn-primary" th:href="@{/login}" target="_blank">Go to sign in</a>
+            </div>
+        </div>
+
+        <th:block th:if="${customer != null}">
+            <p class="small text-body-secondary">A new code every hour. Copy the code that is
+                <b class="text-body">valid now</b> and paste it into the sign-in window.</p>
+
+            <ul class="list-group code-list mb-3">
+                <li th:each="c : ${codes}" class="list-group-item d-flex align-items-center gap-3"
+                    th:classappend="${c.current} ? 'code-current'">
+                    <div class="flex-grow-1">
+                        <div class="code-value" th:text="${c.code}"></div>
+                        <div class="small text-body-secondary">
+                            <span th:text="|${#temporals.format(c.validFrom, 'HH:mm')}–${#temporals.format(c.validUntil, 'HH:mm')}|"></span>
+                            <span th:if="${c.current}" class="badge text-bg-success ms-1">Valid now</span>
+                            <span th:unless="${c.current}" class="badge text-bg-secondary ms-1">Upcoming</span>
+                        </div>
+                    </div>
+                    <button type="button" class="btn copy-button" th:classappend="${c.current} ? 'btn-primary' : 'btn-outline-light'"
+                        th:attr="data-copy=${c.code}" th:aria-label="|Copy code ${c.code}|">Copy</button>
+                </li>
+            </ul>
+
+            <p class="small text-success mb-2" id="copy-status" role="status" aria-live="polite"></p>
+
+            <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 small text-body-secondary">
+                <span>The current code expires in <span th:text="${minutesLeft}"></span> min · times in
+                    <span th:text="${zone}"></span></span>
+                <span class="d-flex gap-2">
+                    <a class="btn btn-sm btn-outline-light" th:href="@{/authenticator/codes}">Refresh</a>
+                    <button type="button" class="btn btn-sm btn-outline-light" data-close-window>Close</button>
+                </span>
+            </div>
+        </th:block>
+    </main>
+</body>
+</html>

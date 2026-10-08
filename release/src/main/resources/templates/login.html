@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en" data-bs-theme="dark">
+
+<head th:replace="~{fragments/header :: head('Sign in')}"></head>
+
+<body>
+    <nav th:replace="~{fragments/navigation :: navigation('')}"></nav>
+    <main class="container py-5">
+        <div class="auth-card mx-auto">
+            <div th:replace="~{fragments/alerts :: alerts}"></div>
+
+            <div class="card">
+                <div class="card-body p-4">
+                    <div class="auth-step">Step 1 of 2</div>
+                    <h1 class="h3 mb-1">Sign in</h1>
+                    <p class="text-body-secondary mb-4">Choose your customer account. Next you will enter a 6-digit
+                        code from the authenticator.</p>
+
+                    <form method="post" th:action="@{/login}">
+                        <div class="mb-4">
+                            <label for="customerId" class="form-label">Customer</label>
+                            <select class="form-select form-select-lg" name="customerId" id="customerId" required>
+                                <option th:each="c : ${customers}" th:value="${c.id}"
+                                    th:selected="${c.id == selectedId}" th:text="${c.fullName}"></option>
+                            </select>
+                        </div>
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary btn-lg">Log in</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <p class="small text-body-secondary text-center mt-3 mb-0">This is a demo: there are no passwords, and the
+                authenticator codes are shown on the next page.</p>
+        </div>
+    </main>
+    <footer th:replace="~{fragments/footer :: footer}"></footer>
+</body>
+</html>

@@ -12,7 +12,7 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
 /**
- * Form backing object for the "Add transaction" page.
+ * Form backing object for the "Add transaction" page. The transaction is always for the signed-in customer.
  */
 public class TransactionForm {
 
@@ -32,9 +32,6 @@ public class TransactionForm {
     @NotNull(message = "The date cannot be empty")
     @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
     private LocalDate date = LocalDate.now();
-
-    @NotNull(message = "Choose a customer")
-    private Long customerId;
 
     @Size(max = 255, message = "The message can be at most 255 characters")
     private String message;
@@ -68,14 +65,6 @@ public class TransactionForm {
 
     public void setDate(LocalDate date) {
         this.date = date;
-    }
-
-    public Long getCustomerId() {
-        return customerId;
-    }
-
-    public void setCustomerId(Long customerId) {
-        this.customerId = customerId;
     }
 
     public String getMessage() {

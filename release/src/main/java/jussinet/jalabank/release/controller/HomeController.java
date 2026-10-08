@@ -12,6 +12,7 @@ import java.util.Locale;
 import java.util.UUID;
 import java.util.stream.IntStream;
 
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -28,12 +29,11 @@ import jussinet.jalabank.release.model.DeleteResult;
 import jussinet.jalabank.release.model.PageResult;
 import jussinet.jalabank.release.model.StatementRow;
 import jussinet.jalabank.release.model.Transaction;
-import jussinet.jalabank.release.repository.CustomerRepository;
 import jussinet.jalabank.release.service.TransactionService;
 import jussinet.jalabank.release.web.TransactionForm;
 
 /**
- * Main controller (for the web pages)
+ * Main controller (for the web pages). Every page shows the signed-in customer's own data.
  */
 @Controller
 public class HomeController {
@@ -44,11 +44,9 @@ public class HomeController {
     public record MonthOption(int number, String name) {
     }
 
-    private final CustomerRepository customerRepository;
     private final TransactionService transactionService;
 
-    HomeController(CustomerRepository customerRepository, TransactionService transactionService) {
-        this.customerRepository = customerRepository;
+    HomeController(TransactionService transactionService) {
         this.transactionService = transactionService;
     }
 
@@ -56,8 +54,8 @@ public class HomeController {
      * Dashboard
      */
     @GetMapping("/")
-    public String index(Model model, @RequestParam(required = false) Long customerId) {
-        Customer customer = selectCustomer(model, customerId);
+    public String index(Model model, @AuthenticationPrincipal Customer customer) {
+        model.addAttribute("customer", customer);
         YearMonth thisMonth = YearMonth.from(transactionService.today());
         List<Transaction> scheduled = transactionService.scheduled(customer.id());
 
@@ -75,10 +73,10 @@ public class HomeController {
      * Transaction form page
      */
     @GetMapping("/transaction")
-    public String getTransaction(Model model, @RequestParam(required = false) Long customerId) {
+    public String getTransaction(Model model, @AuthenticationPrincipal Customer customer) {
         TransactionForm form = new TransactionForm();
         form.setDate(transactionService.today());
-        form.setCustomerId(selectCustomer(model, customerId).id());
+        model.addAttribute("customer", customer);
         model.addAttribute("transaction", form);
         return "transaction";
     }
@@ -87,23 +85,21 @@ public class HomeController {
      * Save a new transaction
      */
     @PostMapping("/transaction")
-    public String postTransaction(Model model, @ModelAttribute("transaction") @Valid TransactionForm form,
-            BindingResult result, RedirectAttributes redirect) {
+    public String postTransaction(Model model, @AuthenticationPrincipal Customer customer,
+            @ModelAttribute("transaction") @Valid TransactionForm form, BindingResult result,
+            RedirectAttributes redirect) {
 
-        if (form.getCustomerId() != null && customerRepository.findById(form.getCustomerId()).isEmpty()) {
-            result.rejectValue("customerId", "unknown", "Unknown customer");
-        }
         if (!result.hasErrors()) {
             try {
-                transactionService.addTransaction(form.getCustomerId(), form.getDate(), form.signedAmount(),
+                transactionService.addTransaction(customer.id(), form.getDate(), form.signedAmount(),
                         form.getMessage());
                 redirect.addFlashAttribute("success", "Transaction added.");
-                return "redirect:" + balancesUrl(form.getCustomerId(), YearMonth.from(form.getDate()), null, null);
+                return "redirect:" + balancesUrl(YearMonth.from(form.getDate()), null, null);
             } catch (IllegalStateException e) {
                 result.reject("full", e.getMessage());
             }
         }
-        selectCustomer(model, form.getCustomerId());
+        model.addAttribute("customer", customer);
         return "transaction";
     }
 
@@ -113,11 +109,11 @@ public class HomeController {
      * @param page one-based page number
      */
     @GetMapping("/balances")
-    public String balances(Model model, @RequestParam(required = false) Long customerId,
+    public String balances(Model model, @AuthenticationPrincipal Customer customer,
             @RequestParam(required = false) Integer month, @RequestParam(required = false) Integer year,
             @RequestParam(required = false) Integer page, @RequestParam(required = false) Integer size) {
 
-        Customer customer = selectCustomer(model, customerId);
+        model.addAttribute("customer", customer);
         LocalDate today = transactionService.today();
         int selectedMonth = month != null && month >= 1 && month <= 12 ? month : today.getMonthValue();
         int selectedYear = year != null && year >= 1 && year <= 9999 ? year : today.getYear();
@@ -151,11 +147,12 @@ public class HomeController {
     }
 
     /**
-     * Delete one transaction ({@code id}) or the selected ones ({@code ids}), then go back to the balances page
+     * Delete one transaction ({@code id}) or the selected ones ({@code ids}), then go back to the balances page.
+     * Only the signed-in customer's own transactions are deleted.
      */
     @PostMapping("/transactions/delete")
-    public String deleteTransactions(@RequestParam(required = false) UUID id,
-            @RequestParam(required = false) List<UUID> ids, @RequestParam(required = false) Long customerId,
+    public String deleteTransactions(@AuthenticationPrincipal Customer customer,
+            @RequestParam(required = false) UUID id, @RequestParam(required = false) List<UUID> ids,
             @RequestParam(required = false) Integer month, @RequestParam(required = false) Integer year,
             @RequestParam(required = false) Integer page, @RequestParam(required = false) Integer size,
             RedirectAttributes redirect) {
@@ -164,14 +161,14 @@ public class HomeController {
         if (toDelete.isEmpty()) {
             redirect.addFlashAttribute("warning", "Select at least one transaction to delete.");
         } else {
-            DeleteResult result = transactionService.delete(toDelete);
+            DeleteResult result = transactionService.delete(customer.id(), toDelete);
             redirect.addFlashAttribute("success", result.deleted() == 1 ? "Deleted 1 transaction."
                     : "Deleted " + result.deleted() + " transactions.");
         }
         YearMonth yearMonth = month != null && year != null && month >= 1 && month <= 12 && year >= 1 && year <= 9999
                 ? YearMonth.of(year, month)
                 : null;
-        return "redirect:" + balancesUrl(customerId, yearMonth, page, size);
+        return "redirect:" + balancesUrl(yearMonth, page, size);
     }
 
     /**
@@ -182,25 +179,8 @@ public class HomeController {
         return "redirect:/docs";
     }
 
-    /**
-     * Adds the customer list and the selected customer (the requested one, or the first) to the model
-     */
-    private Customer selectCustomer(Model model, Long customerId) {
-        List<Customer> customers = customerRepository.findAll();
-        Customer selected = customers.stream()
-                .filter(c -> customerId != null && c.id() == customerId)
-                .findFirst()
-                .orElse(customers.getFirst());
-        model.addAttribute("customers", customers);
-        model.addAttribute("customer", selected);
-        return selected;
-    }
-
-    private static String balancesUrl(Long customerId, YearMonth month, Integer page, Integer size) {
+    private static String balancesUrl(YearMonth month, Integer page, Integer size) {
         UriComponentsBuilder url = UriComponentsBuilder.fromPath("/balances");
-        if (customerId != null) {
-            url.queryParam("customerId", customerId);
-        }
         if (month != null) {
             url.queryParam("year", month.getYear()).queryParam("month", month.getMonthValue());
         }

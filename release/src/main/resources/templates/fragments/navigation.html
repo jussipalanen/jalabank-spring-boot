@@ -1,11 +1,12 @@
+<!-- The links and the sign-out button show only to a signed-in customer -->
 <nav th:fragment="navigation(active)" class="navbar navbar-expand-lg jb-navbar sticky-top" data-bs-theme="dark">
     <div class="container">
         <a class="navbar-brand" th:href="@{/}"><span class="jb-logo">J</span> Jalabank</a>
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav"
+        <button th:if="${signedIn != null}" class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav"
             aria-controls="mainNav" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>
         </button>
-        <div class="collapse navbar-collapse" id="mainNav">
+        <div class="collapse navbar-collapse" id="mainNav" th:if="${signedIn != null}">
             <ul class="navbar-nav ms-auto mb-2 mb-lg-0 gap-lg-1">
                 <li class="nav-item">
                     <a class="nav-link" th:classappend="${active == 'home'} ? active" th:href="@{/}">Dashboard</a>
@@ -20,6 +21,11 @@
                     <a class="nav-link" th:href="@{/docs}">API docs</a>
                 </li>
             </ul>
+            <form method="post" th:action="@{/logout}" class="d-flex align-items-center gap-2 ms-lg-3 jb-user">
+                <span class="small text-body-secondary">Signed in as
+                    <b class="text-body" id="signed-in-as" th:text="${signedIn.fullName}"></b></span>
+                <button type="submit" class="btn btn-sm btn-outline-light">Sign out</button>
+            </form>
         </div>
     </div>
 </nav>

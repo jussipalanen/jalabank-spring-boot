@@ -13,11 +13,6 @@
                 <h1 class="h3 mb-1">Dashboard</h1>
                 <p class="text-body-secondary mb-0">Hello <span th:text="${customer.firstname}"></span>, here is your overview.</p>
             </div>
-            <form method="get" class="d-flex align-items-center gap-2">
-                <label for="customerId" class="text-body-secondary small mb-0">Customer</label>
-                <select th:replace="~{fragments/customer :: picker}"></select>
-                <noscript><button class="btn btn-primary" type="submit">Show</button></noscript>
-            </form>
         </div>
 
         <div class="row g-3 mb-4">
@@ -63,13 +58,13 @@
             <div class="card-header d-flex flex-wrap align-items-center justify-content-between gap-2">
                 <h2 class="h6 mb-0">Recent transactions</h2>
                 <div class="d-flex gap-2">
-                    <a class="btn btn-sm btn-outline-light" th:href="@{/balances(customerId=${customer.id})}">View all</a>
-                    <a class="btn btn-sm btn-primary" th:href="@{/transaction(customerId=${customer.id})}">Add transaction</a>
+                    <a class="btn btn-sm btn-outline-light" th:href="@{/balances}">View all</a>
+                    <a class="btn btn-sm btn-primary" th:href="@{/transaction}">Add transaction</a>
                 </div>
             </div>
             <div class="table-responsive">
-                <table class="table table-hover align-middle">
-                    <thead>
+                <table class="table table-hover align-middle table-stack">
+                    <thead class="stack-hide">
                         <tr>
                             <th scope="col">Date</th>
                             <th scope="col">Message</th>
@@ -79,15 +74,15 @@
                     </thead>
                     <tbody>
                         <tr th:if="${#lists.isEmpty(recent)}">
-                            <td colspan="4" class="text-body-secondary py-4 text-center">No transactions yet.</td>
+                            <td colspan="4" class="text-body-secondary py-4 text-center table-empty">No transactions yet.</td>
                         </tr>
                         <tr th:each="row : ${recent}">
-                            <td th:text="${#temporals.format(row.date, 'dd.MM.yyyy')}"></td>
-                            <td th:text="${row.message}"></td>
-                            <td class="text-end amount"
+                            <td class="text-nowrap tx-date" th:text="${#temporals.format(row.date, 'dd.MM.yyyy')}"></td>
+                            <td class="tx-message" th:text="${row.message}"></td>
+                            <td class="text-end amount tx-amount"
                                 th:classappend="${row.amount.signum() >= 0 ? 'amount-positive' : 'amount-negative'}"
                                 th:text="${@money.format(row.amount)}"></td>
-                            <td class="text-end amount amount-balance" th:text="${@money.format(row.cumulativeBalance)}"></td>
+                            <td class="text-end amount amount-balance tx-balance" data-label="Balance" th:text="${@money.format(row.cumulativeBalance)}"></td>
                         </tr>
                     </tbody>
                 </table>

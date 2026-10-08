@@ -100,6 +100,7 @@ main {
     font-weight: 700;
     color: var(--bs-emphasis-color);
     font-variant-numeric: tabular-nums;
+    white-space: nowrap;
 }
 
 .stat-card.stat-primary {
@@ -199,6 +200,72 @@ tr.selected {
     margin-bottom: 0;
 }
 
+/* Sign-in */
+.jb-user {
+    white-space: nowrap;
+}
+
+.auth-card {
+    max-width: 30rem;
+}
+
+.auth-step {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--jb-blue-400);
+    font-weight: 600;
+    margin-bottom: 0.35rem;
+}
+
+.code-input {
+    font-family: var(--bs-font-monospace);
+    font-size: 1.6rem;
+    letter-spacing: 0.4em;
+    /* Balances the space letter-spacing leaves after the last digit, so the code stays centred */
+    text-indent: 0.4em;
+    text-align: center;
+}
+
+.auth-codes-link {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 0.9rem 1rem;
+    border: 1px dashed var(--bs-border-color);
+    border-radius: 0.6rem;
+    background: rgba(59, 130, 246, 0.06);
+}
+
+/* Authenticator pop-up window */
+.authenticator-window main {
+    max-width: 30rem;
+}
+
+.code-list {
+    --bs-list-group-bg: rgba(13, 29, 59, 0.85);
+    --bs-list-group-border-color: var(--bs-border-color);
+}
+
+.code-list .code-value {
+    font-family: var(--bs-font-monospace);
+    font-size: 1.35rem;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    color: var(--bs-secondary-color);
+}
+
+.code-list .code-current {
+    background: rgba(37, 99, 235, 0.16);
+}
+
+.code-list .code-current .code-value {
+    font-size: 1.8rem;
+    color: var(--bs-emphasis-color);
+}
+
 .jb-footer {
     border-top: 1px solid var(--bs-border-color-translucent);
     color: var(--bs-secondary-color);
@@ -207,4 +274,108 @@ tr.selected {
 /* Keeps absolutely positioned helpers (such as .visually-hidden headers) inside the scroll area on phones */
 .table-responsive {
     position: relative;
+}
+
+/* Phones */
+@media (max-width: 575.98px) {
+    .stat-card .card-body {
+        padding: 0.85rem;
+    }
+
+    .stat-card .stat-value {
+        font-size: 1.15rem;
+    }
+
+    .stat-card .stat-label {
+        font-size: 0.7rem;
+    }
+
+    .code-list .code-current .code-value {
+        font-size: 1.6rem;
+    }
+
+    /* Transaction tables become two-line rows: message and amount, then date and balance.
+       The checkbox and the delete button, when there are any, sit on the sides. */
+    .table-stack .stack-hide {
+        display: none;
+    }
+
+    .table-stack thead th:not(.tx-select) {
+        display: none;
+    }
+
+    .table-stack tr {
+        display: grid;
+        grid-template-columns: auto minmax(0, 1fr) auto auto;
+        grid-template-areas:
+            "select message amount actions"
+            "select date balance actions";
+        border-bottom: 1px solid var(--bs-border-color);
+    }
+
+    .table-stack > :not(caption) > * > * {
+        border-bottom-width: 0;
+        padding: 0.15rem 0.5rem;
+    }
+
+    /* Full row height, so a selected row is highlighted edge to edge */
+    .table-stack .tx-select,
+    .table-stack .tx-actions {
+        display: flex;
+        align-items: center;
+    }
+
+    .table-stack .tx-select {
+        grid-area: select;
+        width: auto !important;
+        padding-inline: 0.75rem 0.25rem;
+    }
+
+    .table-stack thead .tx-select {
+        padding-block: 0.6rem;
+    }
+
+    .table-stack .tx-message {
+        grid-area: message;
+        padding-top: 0.6rem;
+        font-weight: 500;
+        overflow-wrap: anywhere;
+    }
+
+    .table-stack .tx-amount {
+        grid-area: amount;
+        padding-top: 0.6rem;
+        font-weight: 600;
+    }
+
+    .table-stack .tx-date {
+        grid-area: date;
+        padding-bottom: 0.6rem;
+        font-size: 0.8rem;
+        color: var(--bs-secondary-color);
+    }
+
+    .table-stack .tx-balance {
+        grid-area: balance;
+        padding-bottom: 0.6rem;
+        font-size: 0.8rem;
+    }
+
+    .table-stack .tx-balance::before {
+        content: attr(data-label) " ";
+        color: var(--bs-secondary-color);
+    }
+
+    .table-stack .tx-actions {
+        grid-area: actions;
+    }
+
+    .table-stack .tx-actions .btn-icon {
+        --bs-btn-padding-x: 0.6rem;
+        --bs-btn-padding-y: 0.45rem;
+    }
+
+    .table-stack .table-empty {
+        grid-column: 1 / -1;
+    }
 }
