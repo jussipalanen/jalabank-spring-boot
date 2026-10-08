@@ -22,8 +22,8 @@
                         <div class="mb-3">
                             <label for="code" class="form-label">Authenticator code</label>
                             <input class="form-control form-control-lg code-input" type="text" name="code" id="code"
-                                inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6}" maxlength="6"
-                                placeholder="000000" title="6 digits" required autofocus>
+                                inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6}" enterkeyhint="go"
+                                placeholder="000000" title="6 digits" required autofocus data-digits="6">
                             <div class="form-text" id="attempts-left"
                                 th:text="|${attemptsLeft} ${attemptsLeft == 1 ? 'attempt' : 'attempts'} left.|"></div>
                         </div>

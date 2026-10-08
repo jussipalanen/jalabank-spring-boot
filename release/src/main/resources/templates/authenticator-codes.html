@@ -37,10 +37,12 @@
                             <span th:unless="${c.current}" class="badge text-bg-secondary ms-1">Upcoming</span>
                         </div>
                     </div>
-                    <button type="button" class="btn btn-sm" th:classappend="${c.current} ? 'btn-primary' : 'btn-outline-light'"
+                    <button type="button" class="btn copy-button" th:classappend="${c.current} ? 'btn-primary' : 'btn-outline-light'"
                         th:attr="data-copy=${c.code}" th:aria-label="|Copy code ${c.code}|">Copy</button>
                 </li>
             </ul>
+
+            <p class="small text-success mb-2" id="copy-status" role="status" aria-live="polite"></p>
 
             <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 small text-body-secondary">
                 <span>The current code expires in <span th:text="${minutesLeft}"></span> min · times in

@@ -1,6 +1,6 @@
 # Jalabank Demo Application
 
-A small demo bank built with **Java 21** and **Spring Boot 4**, with a dark blue web UI. Sign in as a customer with an hourly 6-digit authenticator code, add, browse and delete your deposits and withdrawals, see the cumulative balance after each transaction, and use the same data through a REST API documented with OpenAPI at **`/docs`**.
+A small demo bank built with **Java 21** and **Spring Boot 4**, with a dark blue web UI that also works on phones. Sign in as a customer with an hourly 6-digit authenticator code, add, browse and delete your deposits and withdrawals, see the cumulative balance after each transaction, and use the same data through a REST API documented with OpenAPI at **`/docs`**.
 
 The app needs **no database**. It starts with about six months of realistic demo data (salary, rent, groceries, card payments) kept in memory, so it runs anywhere with one command. Everything you add resets when the app restarts.
 
@@ -53,7 +53,9 @@ Every page and the REST API need a signed-in customer. Signing in has two steps:
 1. **Choose a customer.** On `/login`, pick **John Doe** or **Jane Doe** from the list and choose **Log in**. There are no passwords in the demo.
 2. **Enter the authenticator code.** On `/authenticator`, choose **Open authenticator**. A pop-up window lists the customer's code for the current hour (marked **Valid now**) and for the next five hours. Choose **Copy** next to the current code, paste it into the code field and choose **Verify and sign in**.
 
-To switch customers, choose **Sign out** in the top bar and sign in again. While signed in, you only see and change your own transactions.
+On a phone, the authenticator opens in a new tab: copy the code, choose **Close** (or switch back to the sign-in tab) and paste it. Spaces in a pasted code are removed.
+
+To switch customers, choose **Sign out** in the top bar (in the menu on phones) and sign in again. While signed in, you only see and change your own transactions.
 
 <details>
 <summary><b>How the authenticator works</b></summary>

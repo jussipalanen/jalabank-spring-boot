@@ -111,13 +111,14 @@
             </div>
 
             <div class="table-responsive">
-                <table class="table table-hover align-middle">
+                <table class="table table-hover align-middle table-stack">
                     <thead>
                         <tr>
-                            <th scope="col" style="width: 2.5rem">
+                            <th scope="col" class="tx-select" style="width: 2.5rem">
                                 <input class="form-check-input" type="checkbox" id="select-all"
                                     aria-label="Select all transactions on this page"
                                     th:disabled="${transactions.totalElements == 0}">
+                                <label for="select-all" class="d-sm-none ms-2 text-body-secondary">Select all</label>
                             </th>
                             <th scope="col">Date</th>
                             <th scope="col">Message</th>
@@ -129,21 +130,22 @@
                     </thead>
                     <tbody>
                         <tr th:if="${transactions.totalElements == 0}">
-                            <td colspan="7" class="text-body-secondary text-center py-4">No transactions in this month.</td>
+                            <td colspan="7" class="text-body-secondary text-center py-4 table-empty">No transactions in this month.</td>
                         </tr>
                         <tr th:each="row : ${transactions.content}">
-                            <td>
+                            <td class="tx-select">
                                 <input class="form-check-input row-select" type="checkbox" name="ids" th:value="${row.id}"
                                     th:attr="aria-label=|Select ${row.message} on ${#temporals.format(row.date, 'dd.MM.yyyy')}|">
                             </td>
-                            <td class="text-nowrap" th:text="${#temporals.format(row.date, 'dd.MM.yyyy')}"></td>
-                            <td th:text="${row.message}"></td>
+                            <td class="text-nowrap tx-date" th:text="${#temporals.format(row.date, 'dd.MM.yyyy')}"></td>
+                            <td class="tx-message" th:text="${row.message}"></td>
                             <td class="d-none d-lg-table-cell tx-id" th:text="${row.id}"></td>
-                            <td class="text-end amount"
+                            <td class="text-end amount tx-amount"
                                 th:classappend="${row.amount.signum() >= 0 ? 'amount-positive' : 'amount-negative'}"
                                 th:text="${@money.format(row.amount)}"></td>
-                            <td class="text-end amount amount-balance" th:text="${@money.format(row.cumulativeBalance)}"></td>
-                            <td class="text-end">
+                            <td class="text-end amount amount-balance tx-balance" data-label="Balance"
+                                th:text="${@money.format(row.cumulativeBalance)}"></td>
+                            <td class="text-end tx-actions">
                                 <button type="submit" name="id" th:value="${row.id}"
                                     class="btn btn-sm btn-outline-danger btn-icon" title="Delete"
                                     data-confirm="Delete this transaction?"

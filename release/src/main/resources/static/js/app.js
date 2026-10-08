@@ -38,6 +38,27 @@ document.addEventListener("DOMContentLoaded", () => {
             }
             button.textContent = "Copied";
             setTimeout(() => (button.textContent = label), 1500);
+            const status = document.getElementById("copy-status");
+            if (status) {
+                status.textContent = `Copied ${button.dataset.copy}. Close this window and paste it into the code field.`;
+            }
+        });
+    });
+
+    // Keep only digits in a code field, so a pasted "123 456" still fits: <input data-digits="6">.
+    // When the user comes back from the authenticator window, the field is ready for pasting.
+    document.querySelectorAll("input[data-digits]").forEach((input) => {
+        const length = Number(input.dataset.digits);
+        input.addEventListener("input", () => {
+            const digits = input.value.replace(/\D/g, "").slice(0, length);
+            if (digits !== input.value) {
+                input.value = digits;
+            }
+        });
+        window.addEventListener("focus", () => {
+            if (!input.value) {
+                input.focus();
+            }
         });
     });
 

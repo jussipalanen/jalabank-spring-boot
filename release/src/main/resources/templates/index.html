@@ -63,8 +63,8 @@
                 </div>
             </div>
             <div class="table-responsive">
-                <table class="table table-hover align-middle">
-                    <thead>
+                <table class="table table-hover align-middle table-stack">
+                    <thead class="stack-hide">
                         <tr>
                             <th scope="col">Date</th>
                             <th scope="col">Message</th>
@@ -74,15 +74,15 @@
                     </thead>
                     <tbody>
                         <tr th:if="${#lists.isEmpty(recent)}">
-                            <td colspan="4" class="text-body-secondary py-4 text-center">No transactions yet.</td>
+                            <td colspan="4" class="text-body-secondary py-4 text-center table-empty">No transactions yet.</td>
                         </tr>
                         <tr th:each="row : ${recent}">
-                            <td th:text="${#temporals.format(row.date, 'dd.MM.yyyy')}"></td>
-                            <td th:text="${row.message}"></td>
-                            <td class="text-end amount"
+                            <td class="text-nowrap tx-date" th:text="${#temporals.format(row.date, 'dd.MM.yyyy')}"></td>
+                            <td class="tx-message" th:text="${row.message}"></td>
+                            <td class="text-end amount tx-amount"
                                 th:classappend="${row.amount.signum() >= 0 ? 'amount-positive' : 'amount-negative'}"
                                 th:text="${@money.format(row.amount)}"></td>
-                            <td class="text-end amount amount-balance" th:text="${@money.format(row.cumulativeBalance)}"></td>
+                            <td class="text-end amount amount-balance tx-balance" data-label="Balance" th:text="${@money.format(row.cumulativeBalance)}"></td>
                         </tr>
                     </tbody>
                 </table>
