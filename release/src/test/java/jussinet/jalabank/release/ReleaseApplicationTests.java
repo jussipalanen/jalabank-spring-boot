@@ -19,6 +19,8 @@ import org.springframework.mock.web.MockHttpSession;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.web.servlet.assertj.MockMvcTester;
 import org.springframework.test.web.servlet.request.RequestPostProcessor;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 
 import jussinet.jalabank.release.repository.CustomerRepository;
 import jussinet.jalabank.release.security.AuthenticatorService;
@@ -343,10 +345,42 @@ class ReleaseApplicationTests {
 	}
 
 	@Test
+	void everyVisitorHasTheirOwnData() {
+		MockHttpSession first = new MockHttpSession();
+		MockHttpSession second = new MockHttpSession();
+
+		assertThat(mvc.post().uri("/api/v1/transactions").with(signedIn(JOHN, first))
+				.contentType(MediaType.APPLICATION_JSON).content("{\"amount\": -1.50, \"message\": \"Only mine\"}"))
+				.hasStatus(HttpStatus.CREATED);
+
+		assertThat(mvc.get().uri("/").with(signedIn(JOHN, first))).hasStatusOk().bodyText().contains("Only mine");
+		assertThat(mvc.get().uri("/").with(signedIn(JOHN, second))).hasStatusOk().bodyText()
+				.contains("Salary").doesNotContain("Only mine");
+	}
+
+	@Test
+	void theTransactionLimitIsPerVisitor() {
+		while (transactionService.count() < TransactionService.MAX_TRANSACTIONS) {
+			addJaneTransaction("-0.01", "Filler");
+		}
+
+		assertThat(mvc.post().uri("/api/v1/transactions").with(signedIn(JANE))
+				.contentType(MediaType.APPLICATION_JSON).content("{\"amount\": 5}"))
+				.hasStatus(HttpStatus.CONFLICT).bodyJson().extractingPath("$.detail").asString()
+				.contains("Your demo is full");
+		assertThat(mvc.post().uri("/api/v1/transactions").with(signedIn(JANE, new MockHttpSession()))
+				.contentType(MediaType.APPLICATION_JSON).content("{\"amount\": 5}"))
+				.hasStatus(HttpStatus.CREATED);
+	}
+
+	@Test
 	void apiHealth() {
-		assertThat(mvc.get().uri("/api/health")).hasStatusOk().bodyJson()
+		var health = mvc.get().uri("/api/health").exchange();
+		assertThat(health).hasStatusOk().bodyJson()
 				.hasPathSatisfying("$.status", v -> v.assertThat().isEqualTo("UP"))
 				.hasPathSatisfying("$.application", v -> v.assertThat().isEqualTo("jalabank"));
+		// Render checks the health every few seconds; that must not create sessions or copies of the demo data
+		assertThat(health.getRequest().getSession(false)).isNull();
 		assertThat(mvc.get().uri("/actuator/health")).hasStatusOk().bodyJson()
 				.extractingPath("$.status").isEqualTo("UP");
 	}
@@ -371,7 +405,26 @@ class ReleaseApplicationTests {
 
 	/** Signs the request in as the customer, as if they had entered the right authenticator code */
 	private RequestPostProcessor signedIn(long customerId) {
-		return authentication(CustomerAuthentication.of(customerRepository.findById(customerId).orElseThrow()));
+		return signedIn(customerId, testSession());
+	}
+
+	/** Signs the request in as the customer, in the given visitor session */
+	private RequestPostProcessor signedIn(long customerId, MockHttpSession session) {
+		RequestPostProcessor auth = authentication(
+				CustomerAuthentication.of(customerRepository.findById(customerId).orElseThrow()));
+		return request -> {
+			request.setSession(session);
+			return auth.postProcessRequest(request);
+		};
+	}
+
+	/**
+	 * The visitor session of this test. Each visitor has their own demo data, so requests that should see the
+	 * changes made through {@code transactionService} in the test use this session.
+	 */
+	private static MockHttpSession testSession() {
+		return (MockHttpSession) ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes())
+				.getRequest().getSession();
 	}
 
 	/** A 6-digit code that is not {@code code} */

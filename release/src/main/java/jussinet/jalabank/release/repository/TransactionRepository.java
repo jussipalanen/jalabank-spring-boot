@@ -9,14 +9,12 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
-import org.springframework.stereotype.Repository;
-
 import jussinet.jalabank.release.model.Transaction;
 
 /**
- * In-memory transaction store. Contents live only as long as the application runs.
+ * In-memory transaction store. Each visitor has their own (see {@code DemoSandboxConfig}), which lives only as long
+ * as the visitor's session.
  */
-@Repository
 public class TransactionRepository {
 
     private final List<Transaction> transactions = new ArrayList<>();

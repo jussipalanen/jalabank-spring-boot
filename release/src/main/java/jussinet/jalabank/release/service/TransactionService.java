@@ -36,8 +36,8 @@ import jussinet.jalabank.release.repository.TransactionRepository;
 @Service
 public class TransactionService {
 
-    /** Keeps a publicly hosted demo from growing without bound. */
-    public static final int MAX_TRANSACTIONS = 10_000;
+    /** How many transactions one visitor can have, so a public demo cannot grow without bound. */
+    public static final int MAX_TRANSACTIONS = 1_000;
 
     private static final Map<String, Comparator<Transaction>> API_SORTS = Map.of(
             "id", Comparator.comparing(Transaction::id),
@@ -54,7 +54,8 @@ public class TransactionService {
 
     public Transaction addTransaction(long customerId, LocalDate date, BigDecimal amount, String message) {
         if (transactionRepository.count() >= MAX_TRANSACTIONS) {
-            throw new IllegalStateException("The demo is full. Delete some transactions or restart the application.");
+            throw new IllegalStateException("Your demo is full (" + MAX_TRANSACTIONS + " transactions). Delete some, "
+                    + "or sign out and in again to start over.");
         }
         return transactionRepository.save(new Transaction(UUID.randomUUID(), customerId, date, amount, message));
     }

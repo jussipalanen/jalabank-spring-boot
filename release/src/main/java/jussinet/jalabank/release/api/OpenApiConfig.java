@@ -26,8 +26,9 @@ public class OpenApiConfig {
                 .description("""
                         REST API of the Jalabank demo bank.
 
-                        All data is demo data kept in memory: changes made here reset when the application \
-                        restarts. Amounts are in euros; deposits are positive and withdrawals negative.
+                        All data is demo data kept in memory. Every visitor has their own copy: changes made here \
+                        are visible only to you and reset when you sign out or after 30 minutes of inactivity. \
+                        Amounts are in euros; deposits are positive and withdrawals negative.
 
                         The /api/v1 endpoints need a signed-in customer and work on that customer's own data. \
                         Sign in on the [sign-in page](/login) in this browser first; "Try it out" then sends \

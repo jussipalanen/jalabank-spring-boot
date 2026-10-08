@@ -2,7 +2,7 @@
 
 A small demo bank built with **Java 21** and **Spring Boot 4**, with a dark blue web UI that also works on phones. Sign in as a customer with an hourly 6-digit authenticator code, add, browse and delete your deposits and withdrawals, see the cumulative balance after each transaction, and use the same data through a REST API documented with OpenAPI at **`/docs`**.
 
-The app needs **no database**. It starts with about six months of realistic demo data (salary, rent, groceries, card payments) kept in memory, so it runs anywhere with one command. Everything you add resets when the app restarts.
+The app needs **no database**. It has about six months of realistic demo data (salary, rent, groceries, card payments) kept in memory, so it runs anywhere with one command. Every visitor gets their own copy: what you add or delete is visible only to you, and resets when you sign out.
 
 **[Overview](#overview)** · **[Signing in](#signing-in)** · **[Run locally](#run-locally)** · **[Docker](#docker)** · **[Host on Render](#host-on-render)** · **[REST API](#rest-api)** · **[Project structure](#project-structure)** · **[Screenshots](#screenshots)**
 
@@ -24,9 +24,11 @@ The app needs **no database**. It starts with about six months of realistic demo
 <summary><b>How the demo data works</b></summary>
 
 - `DemoDataSeeder` creates two customers, John Doe and Jane Doe, each with their own transactions (salary, rent, groceries, bills) from the start of the month six months ago up to today, so the current month always has data.
-- The generator uses a fixed random seed, so the amounts are the same on every start.
-- Data lives in in-memory repositories (`CustomerRepository`, `TransactionRepository`). There is no database, and nothing is written to disk.
-- To keep a public demo from growing without limit, the app accepts at most 10 000 transactions. Delete some, or restart the app to reset.
+- **Every visitor has their own copy of the transactions.** `DemoSandboxConfig` keeps a separate `TransactionRepository` in each visitor's session and fills it with the demo transactions on first use. Other visitors never see your changes, and nobody can fill or spoil the demo for others.
+- Your copy is gone when you sign out or after 30 minutes without requests; the next sign-in starts from fresh demo data.
+- The generator uses a fixed random seed, so every visitor starts with the same amounts.
+- Data lives in memory only. There is no database, and nothing is written to disk.
+- To keep a public demo from growing without limit, each visitor can have at most 1 000 transactions. Delete some, or sign out and in again to start over.
 
 </details>
 
@@ -55,7 +57,7 @@ Every page and the REST API need a signed-in customer. Signing in has two steps:
 
 On a phone, the authenticator opens in a new tab: copy the code, choose **Close** (or switch back to the sign-in tab) and paste it. Spaces in a pasted code are removed.
 
-To switch customers, choose **Sign out** in the top bar (in the menu on phones) and sign in again. While signed in, you only see and change your own transactions.
+To switch customers, choose **Sign out** in the top bar (in the menu on phones) and sign in again. Signing out also resets your demo data. While signed in, you only see and change your own transactions.
 
 <details>
 <summary><b>How the authenticator works</b></summary>
@@ -206,7 +208,8 @@ No environment variables are needed. Render tells the app which port to use thro
 
 - **Auto-deploy:** each push to the deployed branch rebuilds and redeploys the app. With the blueprint, only changes under `release/` trigger a build.
 - **Free instances sleep** after about 15 minutes without traffic. The first visit after that wakes the service, which can take up to about a minute. The app itself starts in a few seconds.
-- **Data resets** whenever the service restarts, redeploys or wakes from sleep, because the demo data lives in memory. That is intended for a demo.
+- **Data resets** when a visitor signs out or is inactive for 30 minutes, and for everyone whenever the service restarts, redeploys or wakes from sleep, because the demo data lives in memory. That is intended for a demo.
+- **HTTPS:** Render serves the app over HTTPS and tells it so with the `X-Forwarded-Proto` header. `server.forward-headers-strategy=native` in `application.properties` makes the app trust that header, so redirects stay on `https://`, the session cookie is marked `Secure`, and browsers get an HSTS header. Check it with `curl -sI https://<your-domain>/`: the `Location` header should start with `https://`.
 - **Memory:** free instances have 512 MB. The app uses about 150–250 MB.
 - **Custom domain:** add it under the service's **Settings → Custom Domains**.
 - **Logs:** the service's **Logs** tab shows the application output. Look for `Started ReleaseApplication`.
@@ -235,7 +238,7 @@ Errors are returned as JSON [problem details](https://www.rfc-editor.org/rfc/rfc
 | `GET` | `/api/v1/customers/me` | The signed-in customer |
 | `GET` | `/api/v1/customers` | One page of customers |
 | `GET` | `/api/v1/customers/{id}` | One customer, or `404` |
-| `GET` | `/api/health` | Health status, application name and version, uptime and transaction count; `503` when unhealthy |
+| `GET` | `/api/health` | Health status, application name and version, and uptime; `503` when unhealthy |
 | `GET` | `/actuator/health` | Spring Boot's own health check (used by Docker and Render) |
 
 <details>
@@ -302,7 +305,7 @@ curl http://localhost:8080/api/health
 ```
 
 ```json
-{ "status": "UP", "application": "jalabank", "version": "2.2.0", "uptimeSeconds": 3600, "transactions": 107, "time": "2026-10-07T21:30:00Z" }
+{ "status": "UP", "application": "jalabank", "version": "2.3.0", "uptimeSeconds": 3600, "time": "2026-10-07T21:30:00Z" }
 ```
 
 `/api/health` takes its status from the actuator's `/actuator/health`. Both appear in `/docs`.

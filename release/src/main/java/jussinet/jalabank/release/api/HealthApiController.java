@@ -18,7 +18,6 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import jussinet.jalabank.release.service.TransactionService;
 
 /**
  * Health check API. Uses the same health status as the actuator's /actuator/health.
@@ -32,22 +31,18 @@ public class HealthApiController {
     public record HealthResponse(
             @Schema(example = "UP") String status,
             @Schema(example = "jalabank") String application,
-            @Schema(example = "2.1.0") String version,
+            @Schema(example = "2.3.0") String version,
             @Schema(description = "Time since the application started, in seconds", example = "3600")
             long uptimeSeconds,
-            @Schema(description = "Number of transactions in memory", example = "66") int transactions,
             @Schema(example = "2026-10-07T21:30:00Z") Instant time) {
     }
 
     private final HealthEndpoint healthEndpoint;
     private final ObjectProvider<BuildProperties> buildProperties;
-    private final TransactionService transactionService;
 
-    HealthApiController(HealthEndpoint healthEndpoint, ObjectProvider<BuildProperties> buildProperties,
-            TransactionService transactionService) {
+    HealthApiController(HealthEndpoint healthEndpoint, ObjectProvider<BuildProperties> buildProperties) {
         this.healthEndpoint = healthEndpoint;
         this.buildProperties = buildProperties;
-        this.transactionService = transactionService;
     }
 
     @GetMapping
@@ -62,7 +57,6 @@ public class HealthApiController {
                 build != null ? build.getArtifact() : "jalabank",
                 build != null ? build.getVersion() : "unknown",
                 Duration.ofMillis(ManagementFactory.getRuntimeMXBean().getUptime()).toSeconds(),
-                transactionService.count(),
                 Instant.now());
         HttpStatus httpStatus = Status.UP.equals(status) ? HttpStatus.OK : HttpStatus.SERVICE_UNAVAILABLE;
         return ResponseEntity.status(httpStatus).body(body);
