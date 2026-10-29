@@ -31,6 +31,8 @@ PostgreSQL-backed application is retained only in Git history.
 - The `jalabank-demo.jussialanen.com` custom domain with Google-managed HTTPS.
 - Shared project instructions in `AGENTS.md`, imported by `CLAUDE.md`, and an
   upcoming-feature roadmap in `ROADMAP.md`.
+- README technology badges for the application languages, framework, container
+  runtime and Cloud Run hosting.
 - A public `robots.txt` that blocks compliant AI search/training crawlers and
   other general crawlers while allowing Google and Bing to read `noindex`.
 
