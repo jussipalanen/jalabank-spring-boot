@@ -55,6 +55,19 @@ key in GitHub. The account owner can still deploy locally with `./dev deploy`
 using their own Google Cloud login. Other project administrators could change
 Google Cloud permissions independently of this repository.
 
+## Dependency updates
+
+[Dependabot](../.github/dependabot.yml) checks Maven dependencies and Docker base
+images in `release/`, and GitHub Actions in `.github/workflows/`, every Monday at
+09:00 Europe/Helsinki time. Minor and patch updates are grouped per ecosystem;
+major updates open separate PRs. Open version-update PRs are limited to five for
+Maven and three each for Docker and Actions.
+
+Dependabot alerts and security-update PRs are enabled separately in GitHub.
+Security fixes are not held until the weekly version-update schedule. Dependabot
+only proposes changes: the existing CI requirements and owner-only `main` rule
+still apply. No automatic merging or extra bypass permissions are granted.
+
 ## Verify live settings
 
 ```bash
