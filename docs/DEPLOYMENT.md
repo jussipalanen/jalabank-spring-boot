@@ -25,9 +25,13 @@ The demo is configured in the same Google Cloud project as JalaOps:
 
 The runtime account has no project roles. The deployer has the source deployment
 roles and permission to use the runtime and build accounts. Its GitHub identity is
-restricted to `jussipalanen/jalabank-spring-boot` on `refs/heads/main`. The three
+restricted to repository ID `665058949`, `jussipalanen/jalabank-spring-boot` on
+`refs/heads/main`, and owner actor ID `4532255`. The three
 `GCP_*` GitHub repository variables are configured. Automatic deployment becomes
 available when the workflows are merged into `main`.
+
+Only the owner can update `main` and trigger production deployment. See
+[repository protection](REPOSITORY.md) for the live access rules.
 
 To deploy your working copy manually:
 
@@ -71,6 +75,35 @@ resets the demo data and logs visitors out. Instance limits and affinity do not 
 in-memory state durable: old and new revisions can overlap during deployment, and
 Cloud Run can briefly exceed instance limits. A visitor may need to sign in again.
 Use the generated `run.app` HTTPS address; a custom domain is optional.
+
+## Custom domain
+
+`jalabank-demo.jussialanen.com` is mapped to the `jalabank` service in Cloud Run.
+GoDaddy DNS has the required record:
+
+| Type | Name | Target |
+|---|---|---|
+| CNAME | `jalabank-demo` | `ghs.googlehosted.com` |
+
+Cloud Run provisions and renews the HTTPS certificate automatically. After changing
+DNS, certificate issuance usually takes about 15 minutes and can take up to 24 hours;
+the `run.app` address works during that time. See
+[Google's custom-domain guide](https://cloud.google.com/run/docs/mapping-custom-domains).
+This demo uses Cloud Run's preview domain mapping rather than adding a separately
+billed load balancer.
+
+Check the mapping and certificate status:
+
+```bash
+gcloud beta run domain-mappings describe --domain jalabank-demo.jussialanen.com \
+  --project client-jussialanen --region europe-north1 \
+  --format='yaml(status.conditions,status.resourceRecords)'
+```
+
+When both `Ready` and `CertificateProvisioned` are `True`, open
+<https://jalabank-demo.jussialanen.com/>. The secure session cookie and forwarded
+HTTPS configuration work with either hostname. Use a direct DNS record for this
+mapping; masked URL forwarding can interfere with sign-in cookies.
 
 ## One-time Google Cloud setup
 
@@ -191,7 +224,7 @@ gcloud iam workload-identity-pools providers create-oidc jalabank \
   --project "$GCP_PROJECT_ID" --location=global --workload-identity-pool=github \
   --issuer-uri=https://token.actions.githubusercontent.com \
   --attribute-mapping=google.subject=assertion.sub,attribute.repository=assertion.repository,attribute.ref=assertion.ref \
-  --attribute-condition="assertion.repository == '$REPO' && assertion.ref == 'refs/heads/main'"
+  --attribute-condition="assertion.repository == '$REPO' && assertion.repository_id == '665058949' && assertion.ref == 'refs/heads/main' && assertion.actor_id == '4532255'"
 gcloud iam service-accounts add-iam-policy-binding "$DEPLOYER" \
   --project "$GCP_PROJECT_ID" --role=roles/iam.workloadIdentityUser \
   --member="principalSet://iam.googleapis.com/projects/$PROJECT_NUMBER/locations/global/workloadIdentityPools/github/attribute.repository/$REPO"
@@ -207,6 +240,9 @@ The workflow keeps the service public without changing its IAM policy on every
 deploy. A failed build or test prevents deployment. To use a different region,
 service name or runtime identity in automation, set the matching `CLOUD_RUN_*`
 environment variables in the deploy job as well as in your local shell.
+For another repository or owner, replace the repository and actor IDs in both the
+provider condition and workflow. Use `gh api repos/OWNER/REPO --jq .id` and
+`gh api users/OWNER --jq .id` to look up those immutable IDs.
 
 ## Troubleshooting
 

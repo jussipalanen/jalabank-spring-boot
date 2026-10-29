@@ -9,9 +9,8 @@ services:
     dockerfilePath: ./release/Dockerfile
     dockerContext: ./release
     healthCheckPath: /actuator/health
-    # Needs a CNAME record jalabank-demo -> jalabank.onrender.com at the DNS provider
-    domains:
-      - jalabank-demo.jussialanen.com
+    # The jalabank-demo custom domain is mapped to Cloud Run (docs/DEPLOYMENT.md).
+    # Render remains available at its generated onrender.com address.
     buildFilter:
       paths:
         - release/**

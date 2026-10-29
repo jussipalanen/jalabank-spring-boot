@@ -23,6 +23,8 @@ jobs:
     name: CI
     if: >-
       github.ref == 'refs/heads/main' &&
+      github.actor_id == '4532255' &&
+      github.triggering_actor == 'jussipalanen' &&
       vars.GCP_PROJECT_ID != '' &&
       vars.GCP_WORKLOAD_IDENTITY_PROVIDER != '' &&
       vars.GCP_SERVICE_ACCOUNT != ''
@@ -31,6 +33,11 @@ jobs:
   deploy:
     name: Cloud Run
     needs: ci
+    # Check again when rerunning only this job after a successful CI job.
+    if: >-
+      github.ref == 'refs/heads/main' &&
+      github.actor_id == '4532255' &&
+      github.triggering_actor == 'jussipalanen'
     runs-on: ubuntu-latest
     permissions:
       contents: read
