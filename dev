@@ -84,11 +84,20 @@ ${BOLD}Build and test${RESET}
   build              Build the image only
   test               Build and run the Maven tests inside Docker (no local Java needed)
 
+${BOLD}Cloud Run${RESET}
+  deploy [args]      Build and deploy with low-cost defaults (needs GCP_PROJECT_ID)
+  gcloud:status      Show the Cloud Run service address and ready revision
+  gcloud:logs [n]    Read the latest log entries (default 50)
+
 ${BOLD}Clean up${RESET}
   clean              Stop the app and remove the Jalabank images
 
 ${BOLD}Environment${RESET}
   JALABANK_PORT      Host port (default 8080), e.g. JALABANK_PORT=9090 ./dev up
+  GCP_PROJECT_ID     Google Cloud project ID for deploy and gcloud:* commands
+  CLOUD_RUN_REGION  Cloud Run region (default europe-north1)
+  CLOUD_RUN_SERVICE Cloud Run service name (default jalabank)
+  CLOUD_RUN_SERVICE_ACCOUNT  Runtime identity (default jalabank-runtime in the project)
 EOF
 }
 
@@ -96,6 +105,20 @@ cmd="${1:-help}"
 [ $# -gt 0 ] && shift
 
 case "$cmd" in
+deploy)
+    exec bash "$ROOT_DIR/scripts/deploy-cloud-run.sh" "$@"
+    ;;
+gcloud:status | gcloud:logs)
+    : "${GCP_PROJECT_ID:?Set GCP_PROJECT_ID to the Google Cloud project ID}"
+    command -v gcloud >/dev/null 2>&1 || fail "Install the Google Cloud CLI first."
+    cloud_args=("${CLOUD_RUN_SERVICE:-jalabank}" --project "$GCP_PROJECT_ID" --region "${CLOUD_RUN_REGION:-europe-north1}")
+    if [ "$cmd" = gcloud:status ]; then
+        gcloud run services describe "${cloud_args[@]}" \
+            --format='yaml(status.url,status.latestReadyRevisionName)'
+    else
+        gcloud run services logs read "${cloud_args[@]}" --limit "${1:-50}"
+    fi
+    ;;
 up | start)
     require_docker
     if [ "${1:-}" = "-f" ]; then

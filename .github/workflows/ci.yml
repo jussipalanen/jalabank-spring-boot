@@ -1,0 +1,35 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'release/**'
+      - 'scripts/**'
+      - 'dev'
+      - '.github/workflows/**'
+  pull_request:
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Build and test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+          cache-dependency-path: release/pom.xml
+      - name: Check shell syntax
+        run: |
+          bash -n dev
+          bash -n scripts/deploy-cloud-run.sh
+      - name: Build and test
+        working-directory: release
+        run: ./mvnw --batch-mode --no-transfer-progress verify

@@ -4,7 +4,7 @@ A small demo bank built with **Java 21** and **Spring Boot 4**, with a dark blue
 
 The app needs **no database**. It starts with about six months of realistic demo data (salary, rent, groceries, card payments) kept in memory, so it runs anywhere with one command. Everything you add resets when the app restarts.
 
-**[Overview](#overview)** · **[Signing in](#signing-in)** · **[Run locally](#run-locally)** · **[Docker](#docker)** · **[Host on Render](#host-on-render)** · **[REST API](#rest-api)** · **[Project structure](#project-structure)** · **[Screenshots](#screenshots)**
+**[Overview](#overview)** · **[Signing in](#signing-in)** · **[Run locally](#run-locally)** · **[Docker](#docker)** · **[Host on Cloud Run](#host-on-cloud-run)** · **[REST API](#rest-api)** · **[Project structure](#project-structure)** · **[Screenshots](#screenshots)**
 
 ---
 
@@ -169,50 +169,31 @@ The image is a two-stage build. The first stage runs the tests and builds the ja
 
 ---
 
-## Host on Render
+## Host on Cloud Run
 
-[Render](https://render.com) runs the app straight from this repository using the `Dockerfile`. No database is needed, so you only create **one web service**.
+Google Cloud Run runs the whole app as one Docker service with the existing in-memory
+test data. The setup follows JalaOps: Cloud Build builds the image, and GitHub Actions
+can deploy `main` after tests pass using keyless Workload Identity Federation.
 
-### Option A: Blueprint (one click)
+**Live demo:** <https://jalabank-1097769575593.europe-north1.run.app>.
 
-The repository has a `render.yaml` blueprint at its root.
+The low-cost defaults use **zero minimum instances**, **one maximum instance**,
+**1 vCPU**, **512 MiB memory**, and **request-based billing** in `europe-north1`
+(Finland). The service scales to zero when idle, so the next visitor waits for startup.
+Restarts reset demo data, authenticator codes and sign-in sessions. No database is needed.
 
-1. Push the code to GitHub. Render deploys from the branch you choose, usually `main`.
-2. In the Render dashboard, choose **New → Blueprint**.
-3. Connect your GitHub account if you haven't already, and pick the `jalabank-spring-boot` repository.
-4. Render reads `render.yaml` and shows one web service named **jalabank**. Choose **Apply**.
-5. The first build takes a few minutes. When it finishes, open the `https://jalabank-xxxx.onrender.com` URL shown on the service page.
+After the one-time Google Cloud setup:
 
-### Option B: Set it up by hand
+```bash
+export GCP_PROJECT_ID=my-project-id
+./dev deploy --allow-unauthenticated --quiet  # first public deploy
+./dev gcloud:status
+./dev gcloud:logs
+```
 
-1. In the Render dashboard, choose **New → Web Service** and pick the repository.
-2. Fill in:
-
-   | Setting | Value |
-   |---|---|
-   | Language / Runtime | **Docker** |
-   | Branch | `main` |
-   | Root Directory | `release` |
-   | Dockerfile Path | `./Dockerfile` (relative to the root directory) |
-   | Instance Type | **Free** works for the demo |
-
-3. Under **Advanced**, set **Health Check Path** to `/actuator/health`.
-4. Choose **Create Web Service**.
-
-No environment variables are needed. Render tells the app which port to use through the `PORT` variable, and the app reads it (`server.port=${PORT:8080}`).
-
-<details>
-<summary><b>Good to know about Render</b></summary>
-
-- **Auto-deploy:** each push to the deployed branch rebuilds and redeploys the app. With the blueprint, only changes under `release/` trigger a build.
-- **Free instances sleep** after about 15 minutes without traffic. The first visit after that wakes the service, which can take up to about a minute. The app itself starts in a few seconds.
-- **Data resets** whenever the service restarts, redeploys or wakes from sleep, because the demo data lives in memory. That is intended for a demo.
-- **Memory:** free instances have 512 MB. The app uses about 150–250 MB.
-- **Custom domain:** add it under the service's **Settings → Custom Domains**.
-- **Logs:** the service's **Logs** tab shows the application output. Look for `Started ReleaseApplication`.
-- Render's plans and limits change from time to time, so check [render.com/pricing](https://render.com/pricing) for the current ones.
-
-</details>
+See [the deployment guide](docs/DEPLOYMENT.md) for IAM setup, GitHub automation,
+image cleanup and cost details. Light traffic may fit the free allowance; builds,
+image storage and outbound traffic can still incur charges.
 
 ---
 
@@ -236,7 +217,7 @@ Errors are returned as JSON [problem details](https://www.rfc-editor.org/rfc/rfc
 | `GET` | `/api/v1/customers` | One page of customers |
 | `GET` | `/api/v1/customers/{id}` | One customer, or `404` |
 | `GET` | `/api/health` | Health status, application name and version, uptime and transaction count; `503` when unhealthy |
-| `GET` | `/actuator/health` | Spring Boot's own health check (used by Docker and Render) |
+| `GET` | `/actuator/health` | Spring Boot's own health check (used by Docker and Cloud Run) |
 
 <details>
 <summary><b>Pagination and sorting</b></summary>
@@ -318,7 +299,10 @@ curl http://localhost:8080/api/health
 
 ```
 dev                              Docker helper script (./dev help)
-render.yaml                      Render blueprint
+.github/workflows/               CI and Cloud Run deployment
+scripts/deploy-cloud-run.sh       shared manual and CI deployment command
+docs/DEPLOYMENT.md                Cloud Run and custom-domain setup
+docs/REPOSITORY.md                public repository and production access rules
 release/
 ├── Dockerfile                   two-stage image build
 ├── docker-compose.yml           local Docker run
