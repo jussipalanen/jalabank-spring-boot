@@ -10,6 +10,11 @@ history and Maven versions; they were not previously published GitHub releases.
 
 ## [Unreleased]
 
+### Added
+
+- Weekly Dependabot checks for Maven dependencies, Docker base images and pinned
+  GitHub Actions, with grouped minor/patch updates and owner-reviewed PRs.
+
 ## [2.2.0] - 2026-10-30
 
 First published release of the 2026 Jalabank generation. This includes the major

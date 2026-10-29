@@ -44,6 +44,7 @@ delivery dates. Completed changes belong in [CHANGELOG.md](CHANGELOG.md).
 
 ## Maintenance
 
+- [x] Configure weekly Dependabot PRs for Maven, Docker and GitHub Actions.
 - [ ] Keep dependencies and pinned GitHub Actions current through reviewed PRs.
 - [ ] Keep release notes and the application version aligned for each release.
 - [ ] Recheck live indexing directives and production access restrictions after hosting changes.
