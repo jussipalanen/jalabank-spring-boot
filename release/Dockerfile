@@ -9,7 +9,7 @@ COPY src ./src
 RUN mvn -B package
 
 # Run
-FROM eclipse-temurin:21-jre
+FROM eclipse-temurin:24-jre
 RUN useradd --system --uid 10001 jalabank
 COPY --from=build /home/app/target/jalabank.jar /usr/local/lib/jalabank.jar
 USER jalabank
