@@ -4,6 +4,10 @@ A small demo bank built with **Java 21** and **Spring Boot 4**, with a dark blue
 
 The app needs **no database**. It starts with about six months of realistic demo data (salary, rent, groceries, card payments) kept in memory, so it runs anywhere with one command. Everything you add resets when the app restarts.
 
+Version history and release notes: [CHANGELOG.md](CHANGELOG.md). The 2026 rebuild
+is the current generation; the 2023 prototype is legacy history.
+Upcoming work is tracked in [ROADMAP.md](ROADMAP.md).
+
 **[Overview](#overview)** · **[Signing in](#signing-in)** · **[Run locally](#run-locally)** · **[Docker](#docker)** · **[Host on Cloud Run](#host-on-cloud-run)** · **[REST API](#rest-api)** · **[Project structure](#project-structure)** · **[Screenshots](#screenshots)**
 
 ---
@@ -175,7 +179,7 @@ Google Cloud Run runs the whole app as one Docker service with the existing in-m
 test data. The setup follows JalaOps: Cloud Build builds the image, and GitHub Actions
 can deploy `main` after tests pass using keyless Workload Identity Federation.
 
-**Live demo:** <https://jalabank-1097769575593.europe-north1.run.app>.
+**Live demo:** <https://jalabank-demo.jussialanen.com/>.
 
 The low-cost defaults use **zero minimum instances**, **one maximum instance**,
 **1 vCPU**, **512 MiB memory**, and **request-based billing** in `europe-north1`
@@ -194,6 +198,11 @@ export GCP_PROJECT_ID=my-project-id
 See [the deployment guide](docs/DEPLOYMENT.md) for IAM setup, GitHub automation,
 image cleanup and cost details. Light traffic may fit the free allowance; builds,
 image storage and outbound traffic can still incur charges.
+
+The demo sends `noindex` headers and HTML metadata, and its public `robots.txt`
+blocks compliant AI crawlers. Google and Bing may read pages to honor `noindex`.
+These controls apply to both the custom domain and the default Cloud Run address.
+See [indexing controls](docs/DEPLOYMENT.md#search-and-ai-crawlers) for their limits.
 
 ---
 
@@ -327,15 +336,8 @@ release/
 
 </details>
 
-<details>
-<summary><b>Ideas for later</b></summary>
-
-- User registration and passwords
-- Confirming transactions with the authenticator code
-- Search and category filters on the transaction view
-- An optional real database (for example PostgreSQL) behind the same repositories
-
-</details>
+Planned features, including language support and a language switcher, are tracked
+in [ROADMAP.md](ROADMAP.md).
 
 ---
 
