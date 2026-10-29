@@ -1,0 +1,8 @@
+# Search engines must be able to read the noindex response header and meta tag.
+User-agent: Googlebot
+User-agent: bingbot
+Allow: /
+
+# Other compliant crawlers, including AI search and training bots, must not crawl.
+User-agent: *
+Disallow: /

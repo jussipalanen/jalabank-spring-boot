@@ -362,6 +362,33 @@ class ReleaseApplicationTests {
 	}
 
 	@Test
+	void responsesTellSearchEnginesNotToIndexTheDemo() {
+		for (String path : new String[] { "/login", "/authenticator/codes", "/docs", "/swagger-ui/index.html",
+				"/v3/api-docs", "/api/health", "/actuator/health", "/css/app.css", "/", "/api/v1/transactions" }) {
+			var response = mvc.get().uri(path).exchange().getResponse();
+			assertThat(response.getHeader("X-Robots-Tag")).as("indexing policy for %s", path)
+					.isEqualTo("noindex, nofollow, noarchive");
+		}
+		var rejectedForm = mvc.post().uri("/login").param("customerId", "1").exchange();
+		assertThat(rejectedForm).hasStatus(HttpStatus.FORBIDDEN);
+		assertThat(rejectedForm.getResponse().getHeader("X-Robots-Tag")).contains("noindex");
+		assertThat(mvc.get().uri("/login")).hasStatusOk().bodyText()
+				.contains("<meta name=\"robots\" content=\"noindex, nofollow, noarchive\">");
+		assertThat(mvc.get().uri("/").with(signedIn(JOHN))).hasStatusOk().bodyText()
+				.contains("<meta name=\"robots\" content=\"noindex, nofollow, noarchive\">");
+	}
+
+	@Test
+	void robotsPolicyIsAvailableWithoutSigningIn() {
+		var result = mvc.get().uri("/robots.txt").exchange();
+		assertThat(result).hasStatusOk().bodyText()
+				.contains("User-agent: Googlebot\nUser-agent: bingbot\nAllow: /",
+						"User-agent: *\nDisallow: /");
+		assertThat(result.getResponse().getContentType()).startsWith("text/plain");
+		assertThat(result.getResponse().getHeader("X-Robots-Tag")).contains("noindex");
+	}
+
+	@Test
 	void staticAssetsAreServedLocally() {
 		assertThat(mvc.get().uri("/webjars/bootstrap/css/bootstrap.min.css")).hasStatusOk();
 		assertThat(mvc.get().uri("/webjars/bootstrap/js/bootstrap.bundle.min.js")).hasStatusOk();

@@ -10,6 +10,7 @@ import org.springframework.security.web.authentication.HttpStatusEntryPoint;
 import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint;
 import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
 import org.springframework.security.web.context.SecurityContextRepository;
+import org.springframework.security.web.header.writers.StaticHeadersWriter;
 import org.springframework.security.web.servlet.util.matcher.PathPatternRequestMatcher;
 import org.springframework.security.web.util.matcher.AnyRequestMatcher;
 
@@ -37,10 +38,13 @@ public class SecurityConfig {
         http
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/login", "/authenticator", "/authenticator/codes", "/error").permitAll()
-                        .requestMatchers("/css/**", "/js/**", "/webjars/**", "/favicon.ico").permitAll()
+                        .requestMatchers("/css/**", "/js/**", "/webjars/**", "/favicon.ico", "/robots.txt").permitAll()
                         .requestMatchers("/api/health", "/actuator/health", "/actuator/health/**").permitAll()
                         .requestMatchers("/docs", "/docs/**", "/apidocs", "/swagger-ui/**", "/v3/api-docs/**").permitAll()
                         .anyRequest().hasRole(CustomerAuthentication.ROLE))
+                // Also covers API docs, static files, redirects and authentication errors.
+                .headers(headers -> headers.addHeaderWriter(
+                        new StaticHeadersWriter("X-Robots-Tag", "noindex, nofollow, noarchive")))
                 .securityContext(context -> context.securityContextRepository(securityContextRepository))
                 // The API uses the session cookie, which is SameSite=Lax: other sites cannot send it with a
                 // POST or DELETE, so the API does not need CSRF tokens. The web forms do have them.

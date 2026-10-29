@@ -18,7 +18,8 @@ The demo is configured in the same Google Cloud project as JalaOps:
 | Project | `client-jussialanen` (`1097769575593`) |
 | Region | `europe-north1` |
 | Cloud Run service | `jalabank` |
-| Public URL | <https://jalabank-1097769575593.europe-north1.run.app> |
+| Public URL | <https://jalabank-demo.jussialanen.com/> |
+| Default service URL | <https://jalabank-1097769575593.europe-north1.run.app> |
 | Runtime account | `jalabank-runtime@client-jussialanen.iam.gserviceaccount.com` |
 | GitHub deployer | `jalabank-deployer@client-jussialanen.iam.gserviceaccount.com` |
 | Workload Identity provider | `github/providers/jalabank` |
@@ -104,6 +105,33 @@ When both `Ready` and `CertificateProvisioned` are `True`, open
 <https://jalabank-demo.jussialanen.com/>. The secure session cookie and forwarded
 HTTPS configuration work with either hostname. Use a direct DNS record for this
 mapping; masked URL forwarding can interfere with sign-in cookies.
+
+## Search and AI crawlers
+
+The hosted demo sends `X-Robots-Tag: noindex, nofollow, noarchive` on application
+responses, including API documentation, JSON, static assets and sign-in redirects.
+The shared HTML header also contains equivalent `robots` metadata. This applies
+to the custom domain and the default Cloud Run address.
+
+`/robots.txt` is publicly available. Googlebot and Bingbot can fetch pages to read
+`noindex`; other compliant crawlers, including AI search and training bots, are
+disallowed from all paths. Blocking Googlebot entirely could prevent it from seeing
+`noindex`, leaving an already discovered URL in search results. See
+[Google's noindex guidance](https://developers.google.com/search/docs/crawling-indexing/block-indexing)
+and [OpenAI's crawler controls](https://developers.openai.com/api/docs/bots).
+
+These are crawler instructions, not access control. They cannot guarantee removal
+of existing copies, block a bot that ignores them, or prevent a person from giving
+a public URL to an AI tool. The public GitHub repository is separate and can still
+be indexed; the hosted application's headers do not control GitHub indexing.
+
+After deployment, verify both hostnames:
+
+```bash
+curl -I https://jalabank-demo.jussialanen.com/login
+curl https://jalabank-demo.jussialanen.com/robots.txt
+curl -I https://jalabank-1097769575593.europe-north1.run.app/login
+```
 
 ## One-time Google Cloud setup
 
