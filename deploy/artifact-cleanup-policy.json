@@ -1,0 +1,19 @@
+[
+  {
+    "name": "keep-newest-jalabank",
+    "action": { "type": "Keep" },
+    "mostRecentVersions": {
+      "packageNamePrefixes": ["jalabank"],
+      "keepCount": 3
+    }
+  },
+  {
+    "name": "delete-old-jalabank",
+    "action": { "type": "Delete" },
+    "condition": {
+      "tagState": "ANY",
+      "packageNamePrefixes": ["jalabank"],
+      "olderThan": "604800s"
+    }
+  }
+]

@@ -1,0 +1,7 @@
+# Upload only the files needed by release/Dockerfile, including its tests.
+*
+!Dockerfile
+!.dockerignore
+!pom.xml
+!src/
+!src/**
